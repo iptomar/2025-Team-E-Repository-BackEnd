@@ -11,7 +11,9 @@ CREATE TABLE users (
     idIpt VARCHAR(20) NOT NULL UNIQUE,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
     isDocente BOOLEAN DEFAULT FALSE,
+    isAdmin BOOLEAN DEFAULT FALSE,
     idUnidepart INT DEFAULT NULL,
     idCategoria INT DEFAULT NULL,
 
