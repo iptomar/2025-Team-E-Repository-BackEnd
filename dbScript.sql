@@ -6,20 +6,148 @@ CREATE DATABASE IF NOT EXISTS gp25_dev;
 -- Use the database
 USE gp25_dev;
 
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    idIpt VARCHAR(20) NOT NULL UNIQUE,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    isDocente BOOLEAN DEFAULT FALSE,
-    isAdmin BOOLEAN DEFAULT FALSE,
-    idUnidepart INT DEFAULT NULL,
-    idCategoria INT DEFAULT NULL,
+CREATE TABLE Institutions (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(255),
+    Abbreviation VARCHAR(50),
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME
+);
 
-    CONSTRAINT chk_docente_atributos CHECK (
-        (isDocente = TRUE AND idUnidepart IS NOT NULL AND idCategoria IS NOT NULL)
-        OR
-        (isDocente = FALSE AND idUnidepart IS NULL AND idCategoria IS NULL)
-    )
+CREATE TABLE Schools (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(255),
+    Abbreviation VARCHAR(50),
+    InstitutionFK INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (InstitutionFK) REFERENCES Institutions(Id)
+);
+
+CREATE TABLE Classrooms (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(255),
+    SchoolFK INT,
+    Allocation VARCHAR(100),
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (SchoolFK) REFERENCES Schools(Id)
+);
+
+CREATE TABLE People (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    FirstName VARCHAR(100),
+    LastName VARCHAR(100),
+    Email VARCHAR(100),
+    Title VARCHAR(100),
+    Username VARCHAR(100),
+    Password VARCHAR(100),
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME
+);
+
+CREATE TABLE Roles (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(100),
+    Description TEXT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME
+);
+
+CREATE TABLE PeopleRoles (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    PeopleFK INT,
+    RoleFK INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (PeopleFK) REFERENCES People(Id),
+    FOREIGN KEY (RoleFK) REFERENCES Roles(Id)
+);
+
+CREATE TABLE Courses (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(255),
+    SchoolFK INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (SchoolFK) REFERENCES Schools(Id)
+);
+
+CREATE TABLE Subjects (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(255),
+    Description TEXT,
+    HoursT INT,
+    HoursTP INT,
+    HoursP INT,
+    TotalHours INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME
+);
+
+CREATE TABLE SubjectsProfessors (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    SubjectFK INT,
+    PeopleFK INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
+    FOREIGN KEY (PeopleFK) REFERENCES People(Id)
+);
+
+CREATE TABLE SubjectsCourses (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    SubjectFK INT,
+    CourseId INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
+    FOREIGN KEY (CourseId) REFERENCES Courses(Id)
+);
+
+CREATE TABLE Schedule (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    CourseId INT,
+    Name VARCHAR(255),
+    StartDate DATE,
+    EndDate DATE,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (CourseId) REFERENCES Courses(Id)
+);
+
+CREATE TABLE Block (
+    Id INT PRIMARY KEY AUTO_INCREMENT,
+    SubjectFK INT,
+    StartHour TIME,
+    EndHour TIME,
+    ScheduleFK INT,
+    CreatedBy VARCHAR(100),
+    CreatedOn DATETIME,
+    UpdatedBy VARCHAR(100),
+    UpdatedOn DATETIME,
+    FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
+    FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id)
 );
