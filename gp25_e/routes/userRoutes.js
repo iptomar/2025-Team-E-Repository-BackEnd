@@ -3,7 +3,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const auth = require('../middleware/authMiddleware');
 
-router.get('/', auth, userController.getAllUsers); // 🔒 Protected
+router.get('/', auth, userController.getAllUsers); // Protected
 router.put('/change-password', auth, userController.changePassword); 
 router.get('/:id', auth, userController.getUserById);
 router.post('/', auth, userController.createUser);
