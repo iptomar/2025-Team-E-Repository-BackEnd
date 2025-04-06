@@ -104,17 +104,17 @@ CREATE TABLE Block (
     FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id)
 );
 
-INSERT INTO Roles (Name, Description, CreatedOn)
+INSERT INTO Roles (Name, Description)
 VALUES 
-  ('Admin', 'Administrador do sistema com acesso total.', NOW()),
-  ('Docente', 'Professor responsável pelas disciplinas.', NOW()),
-  ('Secretariado', 'Pessoal administrativo com acesso a gestão de horários e dados.', NOW());
+  ('Admin', 'Administrador do sistema com acesso total.' ),
+  ('Docente', 'Professor responsável pelas disciplinas.' ),
+  ('Secretariado', 'Pessoal administrativo com acesso a gestão de horários e dados.');
   
 INSERT INTO Institutions (Name, Abbreviation)
 VALUES ('Instituto Politécnico de Tomar', 'IPT');
 
-INSERT INTO Schools (Name, Abbreviation, InstitutionFK, CreatedOn)
+INSERT INTO Schools (Name, Abbreviation, InstitutionFK)
 VALUES 
-  ('Escola Superior de Tecnologia de Tomar', 'ESTT', 1, NOW()),
-  ('Escola Superior de Gestão de Tomar', 'ESGT', 1, NOW()),
-  ('Escola Superior de Tecnologia de Abrantes', 'ESTA', 1, NOW());
+  ('Escola Superior de Tecnologia de Tomar', 'ESTT', 1),
+  ('Escola Superior de Gestão de Tomar', 'ESGT', 1),
+  ('Escola Superior de Tecnologia de Abrantes', 'ESTA', 1);
