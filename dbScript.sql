@@ -9,11 +9,7 @@ USE gp25_dev;
 CREATE TABLE Institutions (
     Id INT PRIMARY KEY AUTO_INCREMENT,
     Name VARCHAR(255),
-    Abbreviation VARCHAR(50),
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME
+    Abbreviation VARCHAR(50)
 );
 
 CREATE TABLE Schools (
@@ -21,10 +17,6 @@ CREATE TABLE Schools (
     Name VARCHAR(255),
     Abbreviation VARCHAR(50),
     InstitutionFK INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (InstitutionFK) REFERENCES Institutions(Id)
 );
 
@@ -33,10 +25,6 @@ CREATE TABLE Classrooms (
     Name VARCHAR(255),
     SchoolFK INT,
     Allocation VARCHAR(100),
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (SchoolFK) REFERENCES Schools(Id)
 );
 
@@ -47,43 +35,27 @@ CREATE TABLE People (
     Email VARCHAR(100),
     Title VARCHAR(100),
     Username VARCHAR(100),
-    Password VARCHAR(100),
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME
+    Password VARCHAR(100)
 );
 
 CREATE TABLE Roles (
     Id INT PRIMARY KEY AUTO_INCREMENT,
     Name VARCHAR(100),
-    Description TEXT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME
+    Description TEXT
 );
 
 CREATE TABLE PeopleRoles (
     Id INT PRIMARY KEY AUTO_INCREMENT,
     PeopleFK INT,
     RoleFK INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (PeopleFK) REFERENCES People(Id),
     FOREIGN KEY (RoleFK) REFERENCES Roles(Id)
 );
 
 CREATE TABLE Courses (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id VARCHAR(10) PRIMARY KEY,
     Name VARCHAR(255),
     SchoolFK INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (SchoolFK) REFERENCES Schools(Id)
 );
 
@@ -94,21 +66,13 @@ CREATE TABLE Subjects (
     HoursT INT,
     HoursTP INT,
     HoursP INT,
-    TotalHours INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME
+    TotalHours INT
 );
 
 CREATE TABLE SubjectsProfessors (
     Id INT PRIMARY KEY AUTO_INCREMENT,
     SubjectFK INT,
     PeopleFK INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
     FOREIGN KEY (PeopleFK) REFERENCES People(Id)
 );
@@ -116,25 +80,17 @@ CREATE TABLE SubjectsProfessors (
 CREATE TABLE SubjectsCourses (
     Id INT PRIMARY KEY AUTO_INCREMENT,
     SubjectFK INT,
-    CourseId INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
+    CourseId VARCHAR(10),
     FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
     FOREIGN KEY (CourseId) REFERENCES Courses(Id)
 );
 
 CREATE TABLE Schedule (
     Id INT PRIMARY KEY AUTO_INCREMENT,
-    CourseId INT,
+    CourseId VARCHAR(10),
     Name VARCHAR(255),
     StartDate DATE,
     EndDate DATE,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (CourseId) REFERENCES Courses(Id)
 );
 
@@ -144,10 +100,6 @@ CREATE TABLE Block (
     StartHour TIME,
     EndHour TIME,
     ScheduleFK INT,
-    CreatedBy VARCHAR(100),
-    CreatedOn DATETIME,
-    UpdatedBy VARCHAR(100),
-    UpdatedOn DATETIME,
     FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
     FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id)
 );
@@ -158,8 +110,8 @@ VALUES
   ('Docente', 'Professor responsável pelas disciplinas.', NOW()),
   ('Secretariado', 'Pessoal administrativo com acesso a gestão de horários e dados.', NOW());
   
-INSERT INTO Institutions (Name, Abbreviation, CreatedOn)
-VALUES ('Instituto Politécnico de Tomar', 'IPT', NOW());
+INSERT INTO Institutions (Name, Abbreviation)
+VALUES ('Instituto Politécnico de Tomar', 'IPT');
 
 INSERT INTO Schools (Name, Abbreviation, InstitutionFK, CreatedOn)
 VALUES 
