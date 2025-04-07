@@ -13,11 +13,11 @@ exports.login = async (req, res) => {
       WHERE p.Email = ?
     `, [email]);
 
-    if (rows.length === 0) return res.status(401).json({ message: 'Email not found' });
+    if (rows.length === 0) return res.status(401).json({ message: 'Email não encontrado' });
 
     const user = rows[0];
     const isMatch = await bcrypt.compare(password, user.Password);
-    if (!isMatch) return res.status(401).json({ message: 'Incorrect password' });
+    if (!isMatch) return res.status(401).json({ message: 'Palavra-passe incorreta' });
 
     const token = jwt.sign(
       {
@@ -34,7 +34,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user.Id,
-        name: `${user.FirstName} ${user.LastName}`,
+        name: user.Name,
         email: user.Email,
         roleId: user.RoleFK,
         role: user.RoleName
@@ -45,11 +45,10 @@ exports.login = async (req, res) => {
   }
 };
 
-
 exports.register = async (req, res) => {
-  const { firstName, lastName, email, username, password, title, roleId } = req.body;
+  const { idIpt, name, email, password, title, roleId } = req.body;
 
-  if (!firstName || !lastName || !email || !username || !password || !roleId) {
+  if (!idIpt || !name || !email || !password || !roleId) {
     return res.status(400).json({ message: 'Campos obrigatórios em falta' });
   }
 
@@ -60,14 +59,13 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await db.query(
-      `INSERT INTO People (FirstName, LastName, Email, Username, Password, Title, CreatedOn)
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [firstName, lastName, email, username, hashedPassword, title || null]
+      `INSERT INTO People (IdIpt, Name, Email, Password, Title, CreatedOn)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [idIpt, name, email, hashedPassword, title || null]
     );
 
     const newUserId = result.insertId;
 
-    // Relacionar com Role (PeopleRoles)
     await db.query(
       `INSERT INTO PeopleRoles (PeopleFK, RoleFK, CreatedOn)
        VALUES (?, ?, NOW())`,
