@@ -6,7 +6,13 @@ exports.getAllSubjectsCourses = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT sc.Id, s.Name AS Subject, c.Name AS Course
+      SELECT sc.Id, 
+      s.Name AS Subject, 
+      c.Name AS Course,
+      s.HoursT,
+      s.HoursTP,
+      s.HoursP,
+      s.TotalHours
       FROM SubjectsCourses sc
       JOIN Subjects s ON s.Id = sc.SubjectFK
       JOIN Courses c ON c.Id = sc.CourseId
