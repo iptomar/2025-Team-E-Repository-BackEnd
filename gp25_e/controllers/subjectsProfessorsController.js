@@ -6,18 +6,24 @@ exports.getAllSubjectsProfessors = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT sp.Id,
-      s.Name AS Subject, 
-      p.Name AS Professor,
-      p.Id as PeopleId,
-      s.TotalHours,
-      s.HoursT,
-      s.HoursTP,
-      s.HoursP
+      SELECT 
+        sp.Id,
+        s.Name AS Subject, 
+        p.Name AS Professor,
+        s.TotalHours,
+        s.HoursT,
+        s.HoursTP,
+        s.HoursP
       FROM SubjectsProfessors sp
       JOIN Subjects s ON s.Id = sp.SubjectFK
       JOIN People p ON p.Id = sp.PeopleFK 
-      WHERE sp.PeopleFK = ?
+      JOIN ProfessorsCourses pc ON pc.PeopleFK = sp.PeopleFK
+      WHERE pc.CourseFK = (
+        SELECT CourseFK 
+        FROM ProfessorsCourses 
+        WHERE PeopleFK = ?
+        LIMIT 1
+      );
     `, [req.user.id]); // Mostra as cadeiras do prof cujo o id for passado 
     res.json(rows);
   } catch (err) {

@@ -154,6 +154,14 @@ CREATE TABLE Block (
     FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id)
 );
 
+CREATE TABLE ProfessorsCourses (
+  PeopleFK INT NOT NULL,
+  CourseFK INT NOT NULL,
+  FOREIGN KEY (PeopleFK) REFERENCES People(Id),
+  FOREIGN KEY (CourseFK) REFERENCES Courses(Id),
+  PRIMARY KEY (PeopleFK,CourseFK)
+);
+
 INSERT INTO Roles (Name, Description, CreatedBy, CreatedOn)
 VALUES 
   ('Admin', 'Administrador do sistema com acesso total.', 'admin@gp25.dev', NOW()),
@@ -330,3 +338,11 @@ VALUES
   (11, 2, 'admin@gp25.dev', NOW()),
   (18, 2, 'admin@gp25.dev', NOW()),
   (24, 2, 'admin@gp25.dev', NOW());
+
+INSERT INTO ProfessorsCourses (PeopleFK, CourseFK)
+SELECT DISTINCT 
+  sp.PeopleFK,
+  sc.CourseId
+FROM SubjectsProfessors sp
+JOIN Subjects s ON s.Id = sp.SubjectFK
+JOIN SubjectsCourses sc ON sp.SubjectFK = sc.SubjectFK;
