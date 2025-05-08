@@ -10,6 +10,7 @@ exports.getAllSubjectsProfessors = async (req, res) => {
         sp.Id,
         s.Name AS Subject, 
         p.Name AS Professor,
+        s.Tipologia,
         s.TotalHours,
         s.HoursT,
         s.HoursTP,

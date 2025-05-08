@@ -93,6 +93,7 @@ CREATE TABLE Subjects (
     IdSubject INT,
     Name VARCHAR(255),
     Description VARCHAR(1000),
+    Tipologia EMUM('Teorica', 'Pratica', 'Teorico-Pratica'),
     HoursT INT,
     HoursTP INT,
     HoursP INT,
@@ -333,11 +334,14 @@ VALUES (
   NOW()
 );
 
-INSERT INTO SubjectsProfessors (SubjectFK, PeopleFK, CreatedBy, CreatedOn)
+-- Tipologia (ForeignKey para tabela que o dy)
+INSERT INTO SubjectsProfessors (SubjectFK, PeopleFK, TipologiaFK, CreatedBy, CreatedOn)
 VALUES
-  (11, 2, 'admin@gp25.dev', NOW()),
-  (18, 2, 'admin@gp25.dev', NOW()),
-  (24, 2, 'admin@gp25.dev', NOW());
+  (11, 2, 1, 'admin@gp25.dev', NOW()),
+  (18, 2, 1, 'admin@gp25.dev', NOW()),
+  (24, 2, 1, 'admin@gp25.dev', NOW()),
+  (4, 3, 1, 'admin@gp25.dev', NOW()),
+  (24, 2, 1, 'admin@gp25.dev', NOW())
 
 INSERT INTO ProfessorsCourses (PeopleFK, CourseFK)
 SELECT DISTINCT 
