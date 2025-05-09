@@ -93,7 +93,7 @@ CREATE TABLE Subjects (
     IdSubject INT,
     Name VARCHAR(255),
     Description VARCHAR(1000),
-    Tipologia EMUM('Teorica', 'Pratica', 'Teorico-Pratica'),
+    Tipologia ENUM('Teorica', 'Pratica', 'Teorico-Pratica'),
     HoursT INT,
     HoursTP INT,
     HoursP INT,
@@ -181,6 +181,28 @@ VALUES (
   'admin@gp25.dev',
   NOW()
 );
+INSERT INTO People (IdIpt, Name, Email, Title, Password, CreatedBy, CreatedOn)
+VALUES (
+  2,
+  'Carlos Queiróz',
+  'carloqrz@ipt.pt',
+  'Assistente 2º Triénio',
+  -- Hash da password '123456' com bcrypt (custo 10)
+  '$2b$10$JhUGo2p8ja59GHC0SuOnpOxipzT3AX7IjcmTr9iM7EbpIOsJGNOb.',
+  'admin@gp25.dev',
+  NOW()
+);
+INSERT INTO People (IdIpt, Name, Email, Title, Password, CreatedBy, CreatedOn)
+VALUES (
+  3,
+  'Teste',
+  'teste@ipt.pt',
+  'Docente',
+  -- Hash da password '123456' com bcrypt (custo 10)
+  '$2b$10$JhUGo2p8ja59GHC0SuOnpOxipzT3AX7IjcmTr9iM7EbpIOsJGNOb.',
+  'admin@gp25.dev',
+  NOW()
+);
 
 -- Associar utilizador admin à role Admin
 INSERT INTO PeopleRoles (PeopleFK, RoleFK, CreatedBy, CreatedOn)
@@ -217,67 +239,66 @@ VALUES
   
 INSERT INTO Courses (IdCourse, Name, SchoolFK, CreatedBy, CreatedOn) VALUES ('9119', 'Engenharia Informática', 2, 'admin@gp25.dev', NOW());
 
-
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91192, "Álgebra", "", 28, 42, 0, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91191, "Análise Matemática I", "", 28, 28, 14, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91193, "Introdução à Programação", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91195, "Introdução à Tecnologia", "", 0, 35, 35, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91194, "Sistemas Digitais", "", 28, 42, 0, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91196, "Análise Matemática II", "", 28, 42, 0, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91198, "Introdução à Electrónica Digital", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91197, "Lógica e Computação", "", 28, 28, 14, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (91199, "Programação Orientada a Objectos", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911910, "Tecnologias da Internet I", "", 0, 0, 70, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911914, "Arquitectura de Computadores I", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911915, "Bases de Dados I", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911912, "Estruturas de Dados e Algoritmos", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911913, "Introdução às Telecomunicações", "", 0, 70, 0, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911911, "Probabilidades e Estatística", "", 28, 28, 14, 75, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911918, "Bases de Dados II", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911919, "Microprocessadores", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911917, "Redes de Dados I", "", 0, 28, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911916, "Sistemas Operativos", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911920, "Tecnologias da Internet II", "", 0, 0, 70, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911921, "Análise de Sistemas", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911923, "Arquitectura de Computadores II", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911924, "Gestão e Segurança de Redes Informáticas", "", 0, 28, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911922, "Redes de Dados II", "", 0, 28, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911925, "Sistemas Distribuídos", "", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911926, "Empreendedorismo", "", 0, 70, 0, 70, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911928, "Projecto de Redes", "", 0, 28, 28, 71, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911929, "Projecto de Sistemas de Informação", "", 0, 28, 28, 71, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911930, "Projecto Final", "", 0, 28, 28, 71, 'admin@gp25.dev', NOW());
-INSERT INTO Subjects (IdSubject, Name, Description, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-VALUES (911927, "Sistemas de Informação nas Organizações", "", 0, 70, 0, 70, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91192, "Álgebra", "", "Teorico-Pratica", 28, 42, 0, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91191, "Análise Matemática I", "", "Teorica", 28, 28, 14, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91193, "Introdução à Programação", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91195, "Introdução à Tecnologia", "", "Teorico-Pratica", 0, 35, 35, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91194, "Sistemas Digitais", "", "Teorica", 28, 42, 0, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91196, "Análise Matemática II", "", "Teorico-Pratica", 28, 42, 0, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91198, "Introdução à Electrónica Digital", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91197, "Lógica e Computação", "", "Teorico-Pratica", 28, 28, 14, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (91199, "Programação Orientada a Objectos", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911910, "Tecnologias da Internet I", "", "Pratica", 0, 0, 70, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911914, "Arquitectura de Computadores I", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911915, "Bases de Dados I", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911912, "Estruturas de Dados e Algoritmos", "", "Teorico-Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911913, "Introdução às Telecomunicações", "", "Teorico-Pratica", 0, 70, 0, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911911, "Probabilidades e Estatística", "", "Teorico-Pratica", 28, 28, 14, 75, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911918, "Bases de Dados II", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911919, "Microprocessadores", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911917, "Redes de Dados I", "", "Teorico-Pratica", 0, 28, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911916, "Sistemas Operativos", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911920, "Tecnologias da Internet II", "", "Pratica", 0, 0, 70, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911921, "Análise de Sistemas", "", "Teorico-Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911923, "Arquitectura de Computadores II", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911924, "Gestão e Segurança de Redes Informáticas", "", "Teorico-Pratica", 0, 28, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911922, "Redes de Dados II", "", "Teorico-Pratica", 0, 28, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911925, "Sistemas Distribuídos", "", "Pratica", 28, 0, 42, 80, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911926, "Empreendedorismo", "", "Teorica", 0, 70, 0, 70, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911928, "Projecto de Redes", "", "Teorico-Pratica", 0, 28, 28, 71, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911929, "Projecto de Sistemas de Informação", "", "Teorico-Pratica", 0, 28, 28, 71, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911930, "Projecto Final", "", "Teorico-Pratica", 0, 28, 28, 71, 'admin@gp25.dev', NOW());
+INSERT INTO Subjects (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
+VALUES (911927, "Sistemas de Informação nas Organizações", "", "Teorico-Pratica", 0, 70, 0, 70, 'admin@gp25.dev', NOW());
 
 INSERT INTO SubjectsCourses (SubjectFK, CourseId, CreatedBy, CreatedOn)
 VALUES 
@@ -334,14 +355,14 @@ VALUES (
   NOW()
 );
 
--- Tipologia (ForeignKey para tabela que o dy)
-INSERT INTO SubjectsProfessors (SubjectFK, PeopleFK, TipologiaFK, CreatedBy, CreatedOn)
+INSERT INTO SubjectsProfessors (SubjectFK, PeopleFK, CreatedBy, CreatedOn)
 VALUES
-  (11, 2, 1, 'admin@gp25.dev', NOW()),
-  (18, 2, 1, 'admin@gp25.dev', NOW()),
-  (24, 2, 1, 'admin@gp25.dev', NOW()),
-  (4, 3, 1, 'admin@gp25.dev', NOW()),
-  (24, 2, 1, 'admin@gp25.dev', NOW())
+  (11, 2, 'admin@gp25.dev', NOW()),
+  (18, 2, 'admin@gp25.dev', NOW()),
+  (24, 2, 'admin@gp25.dev', NOW()),
+  (4, 3, 'admin@gp25.dev', NOW()),
+  (24, 2,'admin@gp25.dev', NOW())
+
 
 INSERT INTO ProfessorsCourses (PeopleFK, CourseFK)
 SELECT DISTINCT 
