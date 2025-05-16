@@ -1,5 +1,22 @@
 const db = require('../models/db');
 
+
+exports.getCourseByProfessorId = async(req, res) => {
+  if (req.user.role !== 'Admin' && req.user.role !== 'Docente') return res.status(403).json({ message: 'Acesso negado' });
+  try {
+    // Mostra o(s) curso(s) a que pertence o professor
+    const [rows] = await db.query(`
+        SELECT c.Name
+        FROM ProfessorsCourses as pc
+        JOIN Courses as c ON pc.CourseFK = c.id
+        WHERE pc.PeopleFK = ?;`, [req.user.id]);
+      res.json(rows);
+    }
+  catch(err){
+    res.status(500).json({ error: err.message });
+  }
+}
+
 // GET: listar professores atribuídos a cadeiras
 exports.getAllSubjectsProfessors = async (req, res) => {
   if (req.user.role !== 'Admin' && req.user.role !== 'Docente') return res.status(403).json({ message: 'Acesso negado' });
@@ -28,7 +45,6 @@ exports.getAllSubjectsProfessors = async (req, res) => {
     `, [req.user.id]); // Mostra as cadeiras do prof cujo o id for passado 
     res.json(rows);
   } catch (err) {
-    console.log("aqui")
     res.status(500).json({ error: err.message });
   }
 };
