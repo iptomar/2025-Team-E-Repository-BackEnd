@@ -81,8 +81,9 @@ exports.deleteSchedule = async (req, res) => {
 
 // Adicionar bloco ao calendário
 exports.addBlock = async (req, res) => {
-  const scheduleId = req.params.id;
+  const scheduleId = req.params.scheduleId;
   const { subjectId, startHour, endHour } = req.body;
+
   try {
     await db.query(
       `INSERT INTO Block (SubjectFK, StartHour, EndHour, ScheduleFK, CreatedOn)
@@ -94,6 +95,7 @@ exports.addBlock = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Remover bloco
 exports.deleteBlock = async (req, res) => {
