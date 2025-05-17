@@ -6,7 +6,7 @@ exports.getCourseByProfessorId = async(req, res) => {
   try {
     // Mostra o(s) curso(s) a que pertence o professor
     const [rows] = await db.query(`
-        SELECT c.Name
+        SELECT c.Name, pc.CourseFK
         FROM ProfessorsCourses as pc
         JOIN Courses as c ON pc.CourseFK = c.id
         WHERE pc.PeopleFK = ?;`, [req.user.id]);
