@@ -84,8 +84,7 @@ exports.deleteSchedule = async (req, res) => {
 
 // Adicionar bloco ao calendário
 exports.addBlock = async (req, res) => {
-  const scheduleId = req.params.scheduleId;
-  const { subjectId, startHour, endHour } = req.body;
+  const { subjectId, scheduleId, startHour, endHour } = req.body;
 
   try {
     await db.query(
