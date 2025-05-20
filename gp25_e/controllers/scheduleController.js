@@ -1,15 +1,18 @@
 const db = require('../models/db');
 
-// Criar novo calendário
+// Creates a new schedule
 exports.createSchedule = async (req, res) => {
   const { courseId, name, startDate, endDate } = req.body;
   try {
-    await db.query(
+    const [result] = await db.query(
       `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedOn)
        VALUES (?, ?, ?, ?, NOW())`,
       [courseId, name, startDate, endDate]
     );
-    res.status(201).json({ message: 'Schedule criado com sucesso' });
+    // sends the created scheduleId to the frontend (to be associated) 
+    res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId:result.insertId });
+    
+    //res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -81,8 +84,8 @@ exports.deleteSchedule = async (req, res) => {
 
 // Adicionar bloco ao calendário
 exports.addBlock = async (req, res) => {
-  const scheduleId = req.params.id;
-  const { subjectId, startHour, endHour } = req.body;
+  const { subjectId, scheduleId, startHour, endHour } = req.body;
+
   try {
     await db.query(
       `INSERT INTO Block (SubjectFK, StartHour, EndHour, ScheduleFK, CreatedOn)
@@ -94,6 +97,7 @@ exports.addBlock = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Remover bloco
 exports.deleteBlock = async (req, res) => {

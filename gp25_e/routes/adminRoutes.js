@@ -15,4 +15,7 @@ router.get('/subjects-professors', auth, subjectsProfessors.getAllSubjectsProfes
 router.post('/subjects-professors', auth, subjectsProfessors.assignProfessorToSubject);
 router.delete('/subjects-professors/:id', auth, subjectsProfessors.removeProfessorFromSubject);
 
+// --- Courses ↔ Professors
+router.get('/courses-professors/', auth, subjectsProfessors.getCourseByProfessorId);
+
 module.exports = router;
