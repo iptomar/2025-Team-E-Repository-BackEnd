@@ -109,3 +109,20 @@ exports.deleteBlock = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Obter calendários do utilizador
+exports.getUserSchedules = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const [rows] = await db.query(`
+      SELECT s.*, c.Name as CourseName
+      FROM Schedule s
+      LEFT JOIN Courses c ON s.CourseId = c.Id
+      WHERE s.CreatedBy = ?
+      ORDER BY s.CreatedOn DESC
+    `, [userId]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
