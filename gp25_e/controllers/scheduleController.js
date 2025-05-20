@@ -2,12 +2,12 @@ const db = require('../models/db');
 
 // Creates a new schedule
 exports.createSchedule = async (req, res) => {
-  const { courseId, name, startDate, endDate } = req.body;
+  const { courseId, name, startDate, endDate, createdBy } = req.body;
   try {
     const [result] = await db.query(
-      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedOn)
-       VALUES (?, ?, ?, ?, NOW())`,
-      [courseId, name, startDate, endDate]
+      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedBy, CreatedOn)
+       VALUES (?, ?, ?, ?,?, NOW())`,
+      [courseId, name, startDate, endDate, createdBy]
     );
     // sends the created scheduleId to the frontend (to be associated) 
     res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId:result.insertId });
