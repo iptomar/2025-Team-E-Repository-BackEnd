@@ -7,18 +7,19 @@ const subjectsProfessors = require('../controllers/subjectsProfessorsController'
 const schools = require('../controllers/schoolController');
 const classrooms = require('../controllers/classroomController');
 const people = require('../controllers/peopleController');
+const courses = require('../controllers/courseController');
 
-// --- Subjects ↔ Courses
+// BACKOFFICE Subjects ↔ Courses
 router.get('/subjects-courses', auth, subjectsCourses.getAllSubjectsCourses);
 router.post('/subjects-courses', auth, subjectsCourses.assignSubjectToCourse);
 router.delete('/subjects-courses/:id', auth, subjectsCourses.removeSubjectFromCourse);
 
-// --- Subjects ↔ Professors
+// BACKOFFICE ↔ Professors
 router.get('/subjects-professors', auth, subjectsProfessors.getAllSubjectsProfessors);
 router.post('/subjects-professors', auth, subjectsProfessors.assignProfessorToSubject);
 router.delete('/subjects-professors/:id', auth, subjectsProfessors.removeProfessorFromSubject);
 
-// --- Courses ↔ Professors
+// BACKOFFICE ↔ Professors
 router.get('/courses-professors/', auth, subjectsProfessors.getCourseByProfessorId);
 
 // BACKOFFICE SCHOOLS
@@ -41,5 +42,12 @@ router.get('/people/:id', auth, people.getPersonById);
 router.post('/people', auth, people.createPerson);
 router.put('/people/:id', auth, people.updatePerson);
 router.delete('/people/:id', auth, people.deletePerson);
+
+// BACKOFFICE COURSES
+router.get('/courses', auth, courses.getAllCourses);
+router.get('/courses/:id', auth, courses.getCourseById);
+router.post('/courses', auth, courses.createCourse);
+router.put('/courses/:id', auth, courses.updateCourse);
+router.delete('/courses/:id', auth, courses.deleteCourse);
 
 module.exports = router;
