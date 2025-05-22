@@ -4,7 +4,8 @@ const auth = require('../middleware/authMiddleware');
 
 const subjectsCourses = require('../controllers/subjectsCoursesController');
 const subjectsProfessors = require('../controllers/subjectsProfessorsController');
-const schools = require('../controllers/schoolsController');
+const schools = require('../controllers/schoolController');
+const classrooms = require('../controllers/classroomController');
 
 // --- Subjects ↔ Courses
 router.get('/subjects-courses', auth, subjectsCourses.getAllSubjectsCourses);
@@ -25,5 +26,12 @@ router.get('/schools/:id', auth, schools.getSchoolById);
 router.post('/schools', auth, schools.createSchool);
 router.put('/schools/:id', auth, schools.updateSchool);
 router.delete('/schools/:id', auth, schools.deleteSchool);
+
+// BACKOFFICE CLASSROOMS
+router.get('/classrooms', auth, classrooms.getAllClassrooms);
+router.get('/classrooms/:id', auth, classrooms.getClassroomById);
+router.post('/classrooms', auth, classrooms.createClassroom);
+router.put('/classrooms/:id', auth, classrooms.updateClassroom);
+router.delete('/classrooms/:id', auth, classrooms.deleteClassroom);
 
 module.exports = router;
