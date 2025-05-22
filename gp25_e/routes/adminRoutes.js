@@ -4,6 +4,7 @@ const auth = require('../middleware/authMiddleware');
 
 const subjectsCourses = require('../controllers/subjectsCoursesController');
 const subjectsProfessors = require('../controllers/subjectsProfessorsController');
+const schools = require('../controllers/schoolsController');
 
 // --- Subjects ↔ Courses
 router.get('/subjects-courses', auth, subjectsCourses.getAllSubjectsCourses);
@@ -17,5 +18,12 @@ router.delete('/subjects-professors/:id', auth, subjectsProfessors.removeProfess
 
 // --- Courses ↔ Professors
 router.get('/courses-professors/', auth, subjectsProfessors.getCourseByProfessorId);
+
+// BACKOFFICE SCHOOLS
+router.get('/schools', auth, schools.getAllSchools);
+router.get('/schools/:id', auth, schools.getSchoolById);
+router.post('/schools', auth, schools.createSchool);
+router.put('/schools/:id', auth, schools.updateSchool);
+router.delete('/schools/:id', auth, schools.deleteSchool);
 
 module.exports = router;
