@@ -1,7 +1,7 @@
 const db = require('../models/db');
 
 
-exports.getCourseByProfessorId = async(req, res) => {
+exports.getCourseByProfessorId = async (req, res) => {
   if (req.user.role !== 'Admin' && req.user.role !== 'Docente') return res.status(403).json({ message: 'Acesso negado' });
   try {
     // Mostra o(s) curso(s) a que pertence o professor
@@ -10,9 +10,9 @@ exports.getCourseByProfessorId = async(req, res) => {
         FROM ProfessorsCourses as pc
         JOIN Courses as c ON pc.CourseFK = c.id
         WHERE pc.PeopleFK = ?;`, [req.user.id]);
-      res.json(rows);
-    }
-  catch(err){
+    res.json(rows);
+  }
+  catch (err) {
     res.status(500).json({ error: err.message });
   }
 }

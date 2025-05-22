@@ -10,8 +10,8 @@ exports.createSchedule = async (req, res) => {
       [courseId, name, startDate, endDate, createdBy]
     );
     // sends the created scheduleId to the frontend (to be associated) 
-    res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId:result.insertId });
-    
+    res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
+
     //res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -113,7 +113,7 @@ exports.deleteBlock = async (req, res) => {
 // Obter calendários do utilizador
 exports.getUserSchedules = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
     const [rows] = await db.query(`
       SELECT s.*, c.Name as CourseName
       FROM Schedule s
