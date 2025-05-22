@@ -2,12 +2,12 @@ const db = require('../models/db');
 
 // Creates a new schedule
 exports.createSchedule = async (req, res) => {
-  const { courseId, name, startDate, endDate } = req.body;
+  const { courseId, name, startDate, endDate, createdBy } = req.body;
   try {
     const [result] = await db.query(
-      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedOn)
-       VALUES (?, ?, ?, ?, NOW())`,
-      [courseId, name, startDate, endDate]
+      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedBy, CreatedOn)
+       VALUES (?, ?, ?, ?,?, NOW())`,
+      [courseId, name, startDate, endDate, createdBy]
     );
     // sends the created scheduleId to the frontend (to be associated) 
     res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId:result.insertId });
@@ -105,6 +105,23 @@ exports.deleteBlock = async (req, res) => {
   try {
     await db.query('DELETE FROM Block WHERE Id = ?', [blockId]);
     res.json({ message: 'Bloco removido com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Obter calendários do utilizador
+exports.getUserSchedules = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const [rows] = await db.query(`
+      SELECT s.*, c.Name as CourseName
+      FROM Schedule s
+      LEFT JOIN Courses c ON s.CourseId = c.Id
+      WHERE s.CreatedBy = ?
+      ORDER BY s.CreatedOn DESC
+    `, [userId]);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
