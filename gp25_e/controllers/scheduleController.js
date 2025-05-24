@@ -126,3 +126,15 @@ exports.getUserSchedules = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// GET: todas as salas
+// req talvez seja necesserário no futuro
+exports.getallRooms = async (req, res) => {
+  try {
+    const [rooms] = await db.query(`SELECT * FROM Classrooms`);
+    res.json({ message: 'Salas carregadas com sucesso', rooms });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -14,4 +14,8 @@ router.delete('/:id', auth, scheduleController.deleteSchedule);
 router.post('/:id/blocks', auth, scheduleController.addBlock); // Adicionar bloco a calendário
 router.delete('/blocks/:blockId', auth, scheduleController.deleteBlock); // Apagar bloco
 
+// Classrooms
+router.get('/rooms', auth, scheduleController.getallRooms);
+
 module.exports = router;
+
