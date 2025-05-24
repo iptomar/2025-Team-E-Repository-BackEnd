@@ -3,6 +3,9 @@ const router = express.Router();
 const scheduleController = require('../controllers/scheduleController');
 const auth = require('../middleware/authMiddleware');
 
+// Classrooms
+router.get('/rooms', auth, scheduleController.getallRooms);     
+
 router.get('/', auth, scheduleController.getAllSchedules);
 router.get('/:id', auth, scheduleController.getScheduleById);
 router.get('/user/me', auth, scheduleController.getUserSchedules);
@@ -14,8 +17,7 @@ router.delete('/:id', auth, scheduleController.deleteSchedule);
 router.post('/:id/blocks', auth, scheduleController.addBlock); // Adicionar bloco a calendário
 router.delete('/blocks/:blockId', auth, scheduleController.deleteBlock); // Apagar bloco
 
-// Classrooms
-router.get('/rooms', auth, scheduleController.getallRooms);
+
 
 module.exports = router;
 
