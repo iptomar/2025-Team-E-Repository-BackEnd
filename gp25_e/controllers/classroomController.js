@@ -8,16 +8,19 @@ exports.getAllClassrooms = async (req, res) => {
     const search = req.query.search ? `%${req.query.search}%` : '%';
 
     try {
-        // Total count
         const [countRows] = await db.query(
             'SELECT COUNT(*) AS total FROM Classrooms WHERE Name LIKE ? OR Allocation LIKE ?',
             [search, search]
         );
         const total = countRows[0].total;
 
-        // Paginated results
         const [rows] = await db.query(
-            'SELECT * FROM Classrooms WHERE Name LIKE ? OR Allocation LIKE ? ORDER BY Name ASC LIMIT ? OFFSET ?',
+            `SELECT c.*, s.Name AS SchoolName
+             FROM Classrooms c
+             LEFT JOIN Schools s ON c.SchoolFK = s.Id
+             WHERE c.Name LIKE ? OR c.Allocation LIKE ?
+             ORDER BY c.Name ASC
+             LIMIT ? OFFSET ?`,
             [search, search, limit, offset]
         );
 
@@ -34,6 +37,7 @@ exports.getAllClassrooms = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 exports.getClassroomById = async (req, res) => {
     try {
