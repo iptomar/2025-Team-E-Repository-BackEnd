@@ -19,7 +19,9 @@ exports.getCourseByProfessorId = async (req, res) => {
 
 // GET: listar professores atribuídos a cadeiras
 exports.getAllSubjectsProfessors = async (req, res) => {
-  if (req.user.role !== 'Admin' && req.user.role !== 'Docente') return res.status(403).json({ message: 'Acesso negado' });
+  if (req.user.role !== 'Admin' && req.user.role !== 'Docente') {
+    return res.status(403).json({ message: 'Acesso negado' });
+  }
 
   try {
     const [rows] = await db.query(`
@@ -34,20 +36,15 @@ exports.getAllSubjectsProfessors = async (req, res) => {
         s.HoursP
       FROM SubjectsProfessors sp
       JOIN Subjects s ON s.Id = sp.SubjectFK
-      JOIN People p ON p.Id = sp.PeopleFK 
-      JOIN ProfessorsCourses pc ON pc.PeopleFK = sp.PeopleFK
-      WHERE pc.CourseFK = (
-        SELECT CourseFK 
-        FROM ProfessorsCourses 
-        WHERE PeopleFK = ?
-        LIMIT 1
-      );
-    `, [req.user.id]); // Mostra as cadeiras do prof cujo o id for passado 
+      JOIN People p ON p.Id = sp.PeopleFK
+    `);
+
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // POST: atribuir professor a cadeira
 exports.assignProfessorToSubject = async (req, res) => {
