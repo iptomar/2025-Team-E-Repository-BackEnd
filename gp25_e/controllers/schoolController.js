@@ -8,16 +8,21 @@ exports.getAllSchools = async (req, res) => {
     const search = req.query.search ? `%${req.query.search}%` : '%';
 
     try {
-        // Total count
+        // Total count (não precisa de JOIN)
         const [countRows] = await db.query(
             'SELECT COUNT(*) AS total FROM Schools WHERE Name LIKE ? OR Abbreviation LIKE ?',
             [search, search]
         );
         const total = countRows[0].total;
 
-        // Paginated results
+        // Paginated results com JOIN à tabela Institutions
         const [rows] = await db.query(
-            'SELECT * FROM Schools WHERE Name LIKE ? OR Abbreviation LIKE ? ORDER BY Name ASC LIMIT ? OFFSET ?',
+            `SELECT s.*, i.Name AS InstitutionName
+             FROM Schools s
+             LEFT JOIN Institutions i ON s.InstitutionFK = i.Id
+             WHERE s.Name LIKE ? OR s.Abbreviation LIKE ?
+             ORDER BY s.Name ASC
+             LIMIT ? OFFSET ?`,
             [search, search, limit, offset]
         );
 
@@ -34,6 +39,7 @@ exports.getAllSchools = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 exports.getSchoolById = async (req, res) => {
     try {

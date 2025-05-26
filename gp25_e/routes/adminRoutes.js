@@ -9,6 +9,7 @@ const classrooms = require('../controllers/classroomController');
 const people = require('../controllers/peopleController');
 const courses = require('../controllers/courseController');
 const subjects = require('../controllers/subjectController');
+const institutionsController = require('../controllers/institutionController');
 
 // BACKOFFICE Subjects ↔ Courses
 router.get('/subjects-courses', auth, subjectsCourses.getAllSubjectsCourses);
@@ -57,5 +58,7 @@ router.get('/subjects/:id', auth, subjects.getSubjectById);
 router.post('/subjects', auth, subjects.createSubject);
 router.put('/subjects/:id', auth, subjects.updateSubject);
 router.delete('/subjects/:id', auth, subjects.deleteSubject);
+
+router.get('/institutions', auth, institutionsController.getAllInstitutions);
 
 module.exports = router;
