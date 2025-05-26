@@ -8,14 +8,21 @@ exports.getAllCourses = async (req, res) => {
     const search = req.query.search ? `%${req.query.search}%` : '%';
 
     try {
+        // Contar normalmente
         const [countRows] = await db.query(
             'SELECT COUNT(*) AS total FROM Courses WHERE Name LIKE ? OR IdCourse LIKE ?',
             [search, search]
         );
         const total = countRows[0].total;
 
+        // Incluir nome da escola no resultado
         const [rows] = await db.query(
-            'SELECT * FROM Courses WHERE Name LIKE ? OR IdCourse LIKE ? ORDER BY Name ASC LIMIT ? OFFSET ?',
+            `SELECT c.*, s.Name AS SchoolName
+             FROM Courses c
+             LEFT JOIN Schools s ON c.SchoolFK = s.Id
+             WHERE c.Name LIKE ? OR c.IdCourse LIKE ?
+             ORDER BY c.Name ASC
+             LIMIT ? OFFSET ?`,
             [search, search, limit, offset]
         );
 
@@ -32,6 +39,7 @@ exports.getAllCourses = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // Obter curso por ID
 exports.getCourseById = async (req, res) => {
