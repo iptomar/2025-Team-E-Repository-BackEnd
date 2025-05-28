@@ -147,12 +147,14 @@ CREATE TABLE Block (
     StartHour TIME,
     EndHour TIME,
     ScheduleFK INT,
+    ClassroomFK INT,
     CreatedBy VARCHAR(100),
     CreatedOn DATETIME,
     UpdatedBy VARCHAR(100),
     UpdatedOn DATETIME,
     FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
-    FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id)
+    FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id),
+    FOREIGN KEY (ClassroomFK) REFERENCES Classrooms(Id)
 );
 
 CREATE TABLE ProfessorsCourses (
@@ -361,7 +363,7 @@ VALUES
   (18, 2, 'admin@gp25.dev', NOW()),
   (24, 2, 'admin@gp25.dev', NOW()),
   (4, 3, 'admin@gp25.dev', NOW()),
-  (24, 2,'admin@gp25.dev', NOW())
+  (24, 2, 'admin@gp25.dev', NOW());
 
 
 INSERT INTO ProfessorsCourses (PeopleFK, CourseFK)
