@@ -3,20 +3,25 @@ const db = require('../models/db');
 // Creates a new schedule
 exports.createSchedule = async (req, res) => {
   const { courseId, name, startDate, endDate, createdBy } = req.body;
+
+  // Verifica se a data de fim é posterior à de início
+  if (new Date(endDate) <= new Date(startDate)) {
+    return res.status(400).json({ error: 'A data de fim deve ser posterior à data de início.' });
+  }
+
   try {
     const [result] = await db.query(
       `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedBy, CreatedOn)
-       VALUES (?, ?, ?, ?,?, NOW())`,
+       VALUES (?, ?, ?, ?, ?, NOW())`,
       [courseId, name, startDate, endDate, createdBy]
     );
-    // sends the created scheduleId to the frontend (to be associated) 
-    res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
 
-    //res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
+    res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Listar todos os calendários
 exports.getAllSchedules = async (req, res) => {
