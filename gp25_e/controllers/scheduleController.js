@@ -45,11 +45,15 @@ exports.getScheduleById = async (req, res) => {
     if (!schedule) return res.status(404).json({ message: 'Schedule não encontrado' });
 
     const [blocks] = await db.query(`
-      SELECT b.*, s.Name as SubjectName
+      SELECT 
+        b.*, 
+        s.Name AS SubjectName, 
+        c.Name AS ClassroomName 
       FROM Block b
       LEFT JOIN Subjects s ON b.SubjectFK = s.Id
+      LEFT JOIN Classrooms c ON b.ClassroomFK = c.Id
       WHERE b.ScheduleFK = ?
-      ORDER BY b.StartHour
+      ORDER BY b.DayOfWeek, b.StartHour
     `, [scheduleId]);
 
     res.json({ ...schedule, blocks });
@@ -89,13 +93,28 @@ exports.deleteSchedule = async (req, res) => {
 
 // Adicionar bloco ao calendário
 exports.addBlock = async (req, res) => {
-  const { subjectId, scheduleId, classroomId, startHour, endHour, createdBy } = req.body;
+  const { subjectId, scheduleId, classroomId, startHour, endHour, dayOfWeek, createdBy } = req.body;
+
+ console.log(req.body);
+
+  // Validação lógica
+  if (!subjectId || !scheduleId || !classroomId || !startHour || !endHour || !dayOfWeek) {
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  if (new Date(`1970-01-01T${endHour}`) <= new Date(`1970-01-01T${startHour}`)) {
+    return res.status(400).json({ message: 'Hora de fim tem de ser posterior à hora de início.' });
+  }
+
+  if (dayOfWeek < 1 || dayOfWeek > 6) {
+    return res.status(400).json({ message: 'O dia da semana tem de estar entre 1 (segunda) e 6 (sábado).' });
+  }
 
   try {
     await db.query(
-      `INSERT INTO Block (SubjectFK, StartHour, EndHour, ScheduleFK, ClassroomFK, CreatedBy, CreatedOn)
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [subjectId, startHour, endHour, scheduleId, classroomId, createdBy]
+      `INSERT INTO Block (SubjectFK, StartHour, EndHour, DayOfWeek, ScheduleFK, ClassroomFK, CreatedBy, CreatedOn)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [subjectId, startHour, endHour, dayOfWeek, scheduleId, classroomId, createdBy]
     );
     res.status(201).json({ message: 'Bloco adicionado ao calendário' });
   } catch (err) {
