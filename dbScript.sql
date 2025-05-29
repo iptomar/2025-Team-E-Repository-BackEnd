@@ -146,6 +146,7 @@ CREATE TABLE Block (
     SubjectFK INT,
     StartHour TIME,
     EndHour TIME,
+    DayOfWeek TINYINT,
     ScheduleFK INT,
     ClassroomFK INT,
     CreatedBy VARCHAR(100),
@@ -154,7 +155,8 @@ CREATE TABLE Block (
     UpdatedOn DATETIME,
     FOREIGN KEY (SubjectFK) REFERENCES Subjects(Id),
     FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id),
-    FOREIGN KEY (ClassroomFK) REFERENCES Classrooms(Id)
+    FOREIGN KEY (ClassroomFK) REFERENCES Classrooms(Id),
+    CHECK (DayOfWeek BETWEEN 1 AND 6)
 );
 
 CREATE TABLE ProfessorsCourses (
