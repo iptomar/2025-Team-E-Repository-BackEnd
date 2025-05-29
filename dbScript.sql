@@ -156,10 +156,6 @@ CREATE TABLE Block (
     FOREIGN KEY (ScheduleFK) REFERENCES Schedule(Id),
     FOREIGN KEY (ClassroomFK) REFERENCES Classrooms(Id)
 );
-CREATE TABLE ano_letivo (
-    id INT PRIMARY KEY,
-    descricao VARCHAR(20) NOT NULL
-);
 
 CREATE TABLE ProfessorsCourses (
   PeopleFK INT NOT NULL,
@@ -377,8 +373,3 @@ SELECT DISTINCT
 FROM SubjectsProfessors sp
 JOIN Subjects s ON s.Id = sp.SubjectFK
 JOIN SubjectsCourses sc ON sp.SubjectFK = sc.SubjectFK;
-
-INSERT INTO ano_letivo (id, descricao)
-VALUES (1, '1º ano'),
-      (2, '2º ano'),
-      (3, '3º ano');
