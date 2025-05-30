@@ -2,18 +2,25 @@ const db = require('../models/db');
 
 // Creates a new schedule
 exports.createSchedule = async (req, res) => {
-  const { courseId, name, startDate, endDate, createdBy } = req.body;
+  const {
+    courseId,
+    name,
+    startDate,
+    endDate,
+    curricularYear,
+    class: className,
+    createdBy
+  } = req.body;
 
-  // Verifica se a data de fim é posterior à de início
   if (new Date(endDate) <= new Date(startDate)) {
     return res.status(400).json({ error: 'A data de fim deve ser posterior à data de início.' });
   }
 
   try {
     const [result] = await db.query(
-      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CreatedBy, CreatedOn)
-       VALUES (?, ?, ?, ?, ?, NOW())`,
-      [courseId, name, startDate, endDate, createdBy]
+      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CurricularYear, Class, CreatedBy, CreatedOn)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [courseId, name, startDate, endDate, curricularYear, className, createdBy]
     );
 
     res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
@@ -21,7 +28,6 @@ exports.createSchedule = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 // Listar todos os calendários
 exports.getAllSchedules = async (req, res) => {
@@ -64,15 +70,29 @@ exports.getScheduleById = async (req, res) => {
 
 // Atualizar calendário
 exports.updateSchedule = async (req, res) => {
-  const { name, startDate, endDate, courseId } = req.body;
+  const {
+    name,
+    startDate,
+    endDate,
+    courseId,
+    curricularYear,
+    class: className,
+    updatedBy
+  } = req.body;
   const scheduleId = req.params.id;
+
+  if (new Date(endDate) <= new Date(startDate)) {
+    return res.status(400).json({ error: 'A data de fim deve ser posterior à data de início.' });
+  }
+
   try {
     await db.query(
       `UPDATE Schedule
-       SET Name = ?, StartDate = ?, EndDate = ?, CourseId = ?, UpdatedOn = NOW()
+       SET Name = ?, StartDate = ?, EndDate = ?, CourseId = ?, CurricularYear = ?, Class = ?, UpdatedBy = ?, UpdatedOn = NOW()
        WHERE Id = ?`,
-      [name, startDate, endDate, courseId, scheduleId]
+      [name, startDate, endDate, courseId, curricularYear, className, updatedBy, scheduleId]
     );
+
     res.json({ message: 'Schedule atualizado com sucesso' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -95,7 +115,7 @@ exports.deleteSchedule = async (req, res) => {
 exports.addBlock = async (req, res) => {
   const { subjectId, scheduleId, classroomId, startHour, endHour, dayOfWeek, createdBy } = req.body;
 
- console.log(req.body);
+  console.log(req.body);
 
   // Validação lógica
   if (!subjectId || !scheduleId || !classroomId || !startHour || !endHour || !dayOfWeek) {
