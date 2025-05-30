@@ -48,15 +48,16 @@ exports.getSubjectById = async (req, res) => {
 exports.createSubject = async (req, res) => {
     const {
         IdSubject, Name, Description, Tipologia,
-        HoursT, HoursTP, HoursP, TotalHours, CreatedBy
+        HoursT, HoursTP, HoursP, TotalHours,
+        CurricularYear, CreatedBy
     } = req.body;
 
     try {
         const [result] = await db.query(
             `INSERT INTO Subjects 
-        (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy, CreatedOn)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-            [IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CreatedBy]
+        (IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CurricularYear, CreatedBy, CreatedOn)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CurricularYear, CreatedBy]
         );
         res.status(201).json({ id: result.insertId });
     } catch (err) {
@@ -68,19 +69,23 @@ exports.createSubject = async (req, res) => {
 exports.updateSubject = async (req, res) => {
     const {
         IdSubject, Name, Description, Tipologia,
-        HoursT, HoursTP, HoursP, TotalHours, UpdatedBy
+        HoursT, HoursTP, HoursP, TotalHours,
+        CurricularYear, UpdatedBy
     } = req.body;
 
     try {
         const [result] = await db.query(
             `UPDATE Subjects SET
-        IdSubject = ?, Name = ?, Description = ?, Tipologia = ?, HoursT = ?, HoursTP = ?, HoursP = ?, TotalHours = ?,
-        UpdatedBy = ?, UpdatedOn = NOW()
+        IdSubject = ?, Name = ?, Description = ?, Tipologia = ?,
+        HoursT = ?, HoursTP = ?, HoursP = ?, TotalHours = ?,
+        CurricularYear = ?, UpdatedBy = ?, UpdatedOn = NOW()
        WHERE Id = ?`,
-            [IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, UpdatedBy, req.params.id]
+            [IdSubject, Name, Description, Tipologia, HoursT, HoursTP, HoursP, TotalHours, CurricularYear, UpdatedBy, req.params.id]
         );
 
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Subject not found' });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Subject not found' });
+        }
 
         res.json({ message: 'Subject updated' });
     } catch (err) {
