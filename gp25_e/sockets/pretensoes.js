@@ -1,15 +1,63 @@
-const pretensoes = {}; // buffer de pretensões
-const calendarioBuffer = []; // novo buffer de ações do calendário
+const calendarioBuffer = [];
+
+// Veirfies if there's hours overlapping 
+const isOverlapping = (existsStart, existsEnd, newStart, newEnd) => {
+    // a aula que estamos a colocar termina antes e começa depois
+    // isOverlapping = false. 
+    return existsStart < newEnd && existsEnd > newStart;
+};
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log(`WebSocket: Cliente conectado - ${socket.id}`);
 
-    // ✅ NOVO: Quando o usuário adiciona uma sala no calendário
-    socket.on('adicionarSala', (dados) => {
-      console.log("Sala adicionada ao calendário:", dados);
-      calendarioBuffer.push(dados);
-      io.emit('salaAdicionada', dados); // notifica todos os clientes, se quiser
+    // add classes to buffer after verifying overlapping
+    socket.on('adicionarSala', (novaAula) => {
+      const { roomId, eventStart, eventEnd } = novaAula;
+
+      const newStart = new Date(eventStart);
+      const newEnd = new Date(eventEnd);
+
+      // verify ovelap if roomid exists in buffer
+      const conflito = calendarioBuffer.find((aula) => {
+        return (
+          aula.roomId === roomId &&
+          // verifica se existe sobreposicao
+          isOverlapping(
+            newStart, 
+            newEnd, 
+            new Date(aula.eventStart), 
+            new Date(aula.eventEnd))
+        );
+      });
+
+      if (conflito) {
+        socket.emit('erro', { mensagem: 'Já existe uma aula marcada nessa sala para esse horário.' });
+        return;
+      }
+
+      calendarioBuffer.push(novaAula);
+      console.log("Adicionado ao buffer:", novaAula);
+      console.log('bufferAtualizado', calendarioBuffer);
+      // Envia o buffer atualizado para todos os clientes conectados
+      io.emit('bufferAtualizado', calendarioBuffer);
+    });
+
+    // ➖ Remover aula do buffer (por ID, horário ou outro critério)
+    socket.on('removerSala', (dadosRemover) => {
+      const { roomId, eventStart, eventEnd } = dadosRemover;
+
+      const novaLista = calendarioBuffer.filter((aula) => {
+        return !(
+          aula.roomId === roomId &&
+          aula.eventStart === eventStart &&
+          aula.eventEnd === eventEnd
+        );
+      });
+
+      calendarioBuffer.push(...novaLista);
+
+      console.log('bufferAtualizado', calendarioBuffer);
     });
 
     socket.on('disconnect', () => {
