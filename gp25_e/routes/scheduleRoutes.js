@@ -15,6 +15,6 @@ router.post('/:id/blocks', auth, scheduleController.addBlock); // Adicionar bloc
 router.delete('/blocks/:blockId', auth, scheduleController.deleteBlock); // Apagar bloco
 
 // Blocks conflicts
-router.post('/:id/check-block-conflict', auth, scheduleController.checkBlockConflict);
+router.post('/check-block-conflict', auth, scheduleController.checkBlockConflict);
 
 module.exports = router;
