@@ -24,6 +24,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
 
+// WebSocket handlers
+require('./sockets/pretensoes.js')(io);
 
 // WS
 const httpSV = http.createServer(app);

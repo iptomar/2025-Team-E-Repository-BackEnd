@@ -1,4 +1,3 @@
-
 const pretensoes = {}; // buffer de pretensões
 const calendarioBuffer = []; // novo buffer de ações do calendário
 
