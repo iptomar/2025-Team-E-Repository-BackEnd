@@ -1,6 +1,6 @@
 const calendarioBuffer = [];
 
-// Veirfies if there's hours overlapping 
+// Veirfies if there's overlapping 
 const isOverlapping = (existsStart, existsEnd, newStart, newEnd) => {
     // a aula que estamos a colocar termina antes e começa depois
     // isOverlapping = false. 
@@ -32,15 +32,18 @@ module.exports = (io) => {
       });
 
       if (conflito) {
-        socket.emit('erro', { mensagem: 'Já existe uma aula marcada nessa sala para esse horário.' });
-        return;
+          socket.emit('respostaBuffer', { status: "erro", motivo: 'Já existe uma aula marcada nessa sala para esse horário.' });
+          return;
+      } else{
+          calendarioBuffer.push(novaAula);
+          // para testes
+          console.log("Adicionado ao buffer:", novaAula);
+          console.log('bufferAtualizado', calendarioBuffer);
+          
+          socket.emit('respostaBuffer', { status: 'ok' });
+          // Sends buffer to all conected clients
+          io.emit('bufferAtualizado', calendarioBuffer);
       }
-
-      calendarioBuffer.push(novaAula);
-      console.log("Adicionado ao buffer:", novaAula);
-      console.log('bufferAtualizado', calendarioBuffer);
-      // Envia o buffer atualizado para todos os clientes conectados
-      io.emit('bufferAtualizado', calendarioBuffer);
     });
 
     // ➖ Remover aula do buffer (por ID, horário ou outro critério)
