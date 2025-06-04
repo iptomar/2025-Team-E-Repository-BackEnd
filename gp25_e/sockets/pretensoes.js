@@ -46,21 +46,29 @@ module.exports = (io) => {
       }
     });
 
-    // ➖ Remover aula do buffer (por ID, horário ou outro critério)
+    // ➖ Remover aula do buffer
     socket.on('removerSala', (dadosRemover) => {
       const { roomId, eventStart, eventEnd } = dadosRemover;
+
+      // Convert input to ISO strings for consistent comparison
+      const targetStart = new Date(eventStart).getTime();
+      const targetEnd = new Date(eventEnd).getTime();
 
       const novaLista = calendarioBuffer.filter((aula) => {
         return !(
           aula.roomId === roomId &&
-          aula.eventStart === eventStart &&
-          aula.eventEnd === eventEnd
+          new Date(aula.eventStart).getTime() === targetStart &&
+          new Date(aula.eventEnd).getTime() === targetEnd
         );
       });
 
+      console.log('Aula removida:', dadosRemover);
+      console.log('Lista', novaLista);
+      calendarioBuffer.length = 0;
       calendarioBuffer.push(...novaLista);
 
-      console.log('bufferAtualizado', calendarioBuffer);
+      console.log('Buffer atualizado após remoção:', calendarioBuffer);
+      io.emit('bufferAtualizado', calendarioBuffer);
     });
 
     socket.on('disconnect', () => {
