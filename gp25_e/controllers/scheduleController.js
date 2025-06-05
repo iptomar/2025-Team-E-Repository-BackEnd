@@ -157,14 +157,29 @@ exports.deleteBlock = async (req, res) => {
 exports.getUserSchedules = async (req, res) => {
   try {
     const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+
+    const [[totalResult]] = await db.query(
+      `SELECT COUNT(*) AS total FROM Schedule WHERE CreatedBy = ?`,
+      [userId]
+    );
+    const total = totalResult.total;
+
     const [rows] = await db.query(`
       SELECT s.*, c.Name as CourseName
       FROM Schedule s
       LEFT JOIN Courses c ON s.CourseId = c.Id
       WHERE s.CreatedBy = ?
       ORDER BY s.CreatedOn DESC
-    `, [userId]);
-    res.json(rows);
+      LIMIT ? OFFSET ?
+    `, [userId, limit, offset]);
+
+    res.json({
+      items: rows,
+      totalCount: total
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
