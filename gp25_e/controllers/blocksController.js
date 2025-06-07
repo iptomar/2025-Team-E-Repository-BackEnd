@@ -1,5 +1,3 @@
-blocksControllers
-
 const db = require('../models/db');
 
 // Get all blocks that overlap within an interval
