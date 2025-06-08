@@ -157,15 +157,120 @@ exports.deleteBlock = async (req, res) => {
 exports.getUserSchedules = async (req, res) => {
   try {
     const userId = req.user.id;
-    const [rows] = await db.query(`
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const offset = (page - 1) * limit;
+
+    let baseQuery = `
       SELECT s.*, c.Name as CourseName
       FROM Schedule s
       LEFT JOIN Courses c ON s.CourseId = c.Id
       WHERE s.CreatedBy = ?
-      ORDER BY s.CreatedOn DESC
-    `, [userId]);
-    res.json(rows);
+    `;
+
+    if (search) {
+      baseQuery += ` AND s.Name LIKE ?`;
+    }
+
+    baseQuery += ` ORDER BY s.CreatedOn DESC`;
+
+    let countQuery = `SELECT COUNT(*) AS total FROM Schedule s WHERE s.CreatedBy = ?`;
+    if (search) {
+      countQuery += ` AND s.Name LIKE ?`;
+    }
+
+    const countParams = [userId];
+    const dataParams = [userId];
+    
+    if (search) {
+      const searchTerm = `%${search}%`;
+      countParams.push(searchTerm);
+      dataParams.push(searchTerm);
+    }
+
+    const [[totalResult]] = await db.query(countQuery, countParams);
+    const total = totalResult.total;
+
+    // Add pagination to data query
+    const dataQuery = baseQuery + ` LIMIT ? OFFSET ?`;
+    dataParams.push(limit, offset);
+
+    const [rows] = await db.query(dataQuery, dataParams);
+
+    res.json({
+      items: rows,
+      totalCount: total
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+
+/**
+ * Check if a block conflicts with existing blocks in a schedule
+ */
+
+// Helper function to get the day of Week
+const getDayOfWeek = (dateStr) => {
+  const date = new Date(dateStr)
+  let day = date.getDay();
+  return day === 0 ? 7 : day;
+};
+
+exports.checkBlockConflict = async (req, res) => {
+  console.log(req.body);
+  const { startHour, endHour, date, roomId, subjectId } = req.body;
+  console.log(startHour, endHour, date, roomId);
+  if (!startHour || !endHour || !date || !roomId || !subjectId) {
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  const dayOfWeek = getDayOfWeek(date);
+
+  try {
+    const [roomConflicts] = await db.query(`
+      SELECT * FROM Block
+      WHERE ClassroomFK = ? AND DayOfWeek = ?
+      AND (
+        (StartHour < ? AND EndHour > ?) 
+      )
+    `, [roomId, dayOfWeek, 
+        endHour, startHour]);
+  
+
+    // Check for professor conflicts. O mesmo professor não pode estar em dois sitios ao mesmo tempoo
+    const [professorConflicts] = await db.query(`
+      SELECT b.* 
+      FROM Block b
+      JOIN SubjectsProfessors sp_new ON sp_new.SubjectFK = ?
+      JOIN SubjectsProfessors sp_existing ON sp_existing.SubjectFK = b.SubjectFK
+      WHERE b.DayOfWeek = ?
+        AND sp_existing.PeopleFK = sp_new.PeopleFK
+        AND ((b.StartHour < ? AND b.EndHour > ?))
+    `, [subjectId, dayOfWeek, endHour, startHour]);
+
+    const conflicts = [];
+
+    if (roomConflicts.length > 0) {
+      conflicts.push({ type: 'room', conflicts: roomConflicts });
+    }
+
+    if (professorConflicts.length > 0) {
+      conflicts.push({ type: 'professor', conflicts: professorConflicts });
+    }
+
+    if (conflicts.length > 0) {
+      return res.status(409).json({ message: 'Conflito de blocos encontrado', conflicts });
+    }
+
+    res.json({ message: 'Nenhum conflito encontrado' });
+  }catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+
+
+}
+
