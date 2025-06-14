@@ -157,51 +157,14 @@ exports.deleteBlock = async (req, res) => {
 exports.getUserSchedules = async (req, res) => {
   try {
     const userId = req.user.id;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const search = req.query.search || '';
-    const offset = (page - 1) * limit;
-
-    let baseQuery = `
+    const [rows] = await db.query(`
       SELECT s.*, c.Name as CourseName
       FROM Schedule s
       LEFT JOIN Courses c ON s.CourseId = c.Id
       WHERE s.CreatedBy = ?
-    `;
-
-    if (search) {
-      baseQuery += ` AND s.Name LIKE ?`;
-    }
-
-    baseQuery += ` ORDER BY s.CreatedOn DESC`;
-
-    let countQuery = `SELECT COUNT(*) AS total FROM Schedule s WHERE s.CreatedBy = ?`;
-    if (search) {
-      countQuery += ` AND s.Name LIKE ?`;
-    }
-
-    const countParams = [userId];
-    const dataParams = [userId];
-    
-    if (search) {
-      const searchTerm = `%${search}%`;
-      countParams.push(searchTerm);
-      dataParams.push(searchTerm);
-    }
-
-    const [[totalResult]] = await db.query(countQuery, countParams);
-    const total = totalResult.total;
-
-    // Add pagination to data query
-    const dataQuery = baseQuery + ` LIMIT ? OFFSET ?`;
-    dataParams.push(limit, offset);
-
-    const [rows] = await db.query(dataQuery, dataParams);
-
-    res.json({
-      items: rows,
-      totalCount: total
-    });
+      ORDER BY s.CreatedOn DESC
+    `, [userId]);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
