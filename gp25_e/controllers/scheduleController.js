@@ -160,6 +160,7 @@ exports.getUserSchedules = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
     const search = req.query.search || '';
+    const classFilter = req.query.class || '';
     const offset = (page - 1) * limit;
 
     let baseQuery = `
@@ -169,34 +170,32 @@ exports.getUserSchedules = async (req, res) => {
       WHERE s.CreatedBy = ?
     `;
 
+    let countQuery = `SELECT COUNT(*) AS total FROM Schedule s WHERE s.CreatedBy = ?`;
+
+    const params = [userId];
+    const countParams = [userId];
+
     if (search) {
       baseQuery += ` AND s.Name LIKE ?`;
-    }
-
-    baseQuery += ` ORDER BY s.CreatedOn DESC`;
-
-    let countQuery = `SELECT COUNT(*) AS total FROM Schedule s WHERE s.CreatedBy = ?`;
-    if (search) {
       countQuery += ` AND s.Name LIKE ?`;
+      params.push(`%${search}%`);
+      countParams.push(`%${search}%`);
     }
 
-    const countParams = [userId];
-    const dataParams = [userId];
-    
-    if (search) {
-      const searchTerm = `%${search}%`;
-      countParams.push(searchTerm);
-      dataParams.push(searchTerm);
+    if (classFilter) {
+      baseQuery += ` AND s.Class = ?`;
+      countQuery += ` AND s.Class = ?`;
+      params.push(classFilter);
+      countParams.push(classFilter);
     }
+
+    baseQuery += ` ORDER BY s.CreatedOn DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
 
     const [[totalResult]] = await db.query(countQuery, countParams);
     const total = totalResult.total;
 
-    // Add pagination to data query
-    const dataQuery = baseQuery + ` LIMIT ? OFFSET ?`;
-    dataParams.push(limit, offset);
-
-    const [rows] = await db.query(dataQuery, dataParams);
+    const [rows] = await db.query(baseQuery, params);
 
     res.json({
       items: rows,
@@ -206,6 +205,7 @@ exports.getUserSchedules = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Obter calendários por turma. Sever de Filtração de Calendarios
 exports.getSchedulesByClass = async (req, res) => {
