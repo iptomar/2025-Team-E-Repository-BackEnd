@@ -184,7 +184,6 @@ exports.getUserSchedules = async (req, res) => {
       countParams.push(`%${search}%`);
     }
 
-    console.log('Received curricularYear:', req.query.curricularYear);
     if (classFilter) {
       baseQuery += ` AND s.Class = ?`;
       countQuery += ` AND s.Class = ?`;
