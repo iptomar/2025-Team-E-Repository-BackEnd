@@ -161,7 +161,8 @@ exports.getUserSchedules = async (req, res) => {
     const limit = parseInt(req.query.limit) || 5;
     const search = req.query.search || '';
     const classFilter = req.query.class || '';
-    const offset = (page - 1) * limit;
+    const curricularYear = req.query.curricularYear || '';
+    const offset = (page - 1) * limit;  
 
     let baseQuery = `
       SELECT s.*, c.Name as CourseName
@@ -175,6 +176,7 @@ exports.getUserSchedules = async (req, res) => {
     const params = [userId];
     const countParams = [userId];
 
+    // Adiciona filtros adicionais à query quando estes são especificados
     if (search) {
       baseQuery += ` AND s.Name LIKE ?`;
       countQuery += ` AND s.Name LIKE ?`;
@@ -182,11 +184,19 @@ exports.getUserSchedules = async (req, res) => {
       countParams.push(`%${search}%`);
     }
 
+    console.log('Received curricularYear:', req.query.curricularYear);
     if (classFilter) {
       baseQuery += ` AND s.Class = ?`;
       countQuery += ` AND s.Class = ?`;
       params.push(classFilter);
       countParams.push(classFilter);
+    }
+
+    if (curricularYear) {
+      baseQuery += ` AND s.CurricularYear = ?`;
+      countQuery += ` AND s.CurricularYear = ?`;
+      params.push(curricularYear);
+      countParams.push(curricularYear);
     }
 
     baseQuery += ` ORDER BY s.CreatedOn DESC LIMIT ? OFFSET ?`;
@@ -205,10 +215,6 @@ exports.getUserSchedules = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-
-
-
 
 /**
  * Check if a block conflicts with existing blocks in a schedule
