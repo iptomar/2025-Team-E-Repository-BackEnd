@@ -207,6 +207,30 @@ exports.getUserSchedules = async (req, res) => {
   }
 };
 
+// Obter calendários por turma. Sever de Filtração de Calendarios
+exports.getSchedulesByClass = async (req, res) => {
+  const className = req.query.class;
+
+  if (!className) {
+    return res.status(400).json({ error: 'O parâmetro "class" é obrigatório.' });
+  }
+
+  try {
+    const [schedules] = await db.query(`
+      SELECT s.*, c.Name as CourseName
+      FROM Schedule s
+      LEFT JOIN Courses c ON s.CourseId = c.Id
+      WHERE s.Class = ?
+      ORDER BY s.CreatedOn DESC
+    `, [className]);
+
+    res.json(schedules);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 
 /**
