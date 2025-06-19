@@ -94,20 +94,23 @@ exports.deleteCourse = async (req, res) => {
 
 // GET /api/user/courses
 exports.getUserCourses = async (req, res) => {
-    try {
-        const userId = req.user.id; // assumindo que vem do middleware de autenticação
+  try {
+    const userId = req.user.id;
 
-        const [rows] = await db.query(
-            `SELECT DISTINCT c.Id, c.Name
-             FROM Courses c
-             INNER JOIN Enrollments e ON e.CourseFK = c.Id
-             WHERE e.UserFK = ?`,
-            [userId]
-        );
+    const [rows] = await db.query(
+      `SELECT c.Id AS id, c.Name AS name
+       FROM Courses c
+       INNER JOIN ProfessorsCourses pc ON pc.CourseFK = c.Id
+       WHERE pc.PeopleFK = ?
+       ORDER BY c.Name`,
+      [userId]
+    );
 
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar cursos do utilizador:", err);
+    res.status(500).json({ error: 'Erro interno ao obter cursos.' });
+  }
 };
+
 
