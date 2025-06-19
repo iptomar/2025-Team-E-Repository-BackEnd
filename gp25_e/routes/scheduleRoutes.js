@@ -3,7 +3,7 @@ const router            = express.Router();
 
 const scheduleController = require('../controllers/scheduleController');
 const blocksController   = require('../controllers/blocksController');
-const coursesController  = require('../controllers/coursesController'); 
+const coursesController  = require('../controllers/courseController'); 
 
 const auth = require('../middleware/authMiddleware');
 
