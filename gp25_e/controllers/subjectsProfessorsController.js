@@ -17,33 +17,51 @@ exports.getCourseByProfessorId = async (req, res) => {
   }
 }
 
-// GET: listar professores atribuídos a cadeiras
+// GET /api/subjects-professors?year=1
 exports.getAllSubjectsProfessors = async (req, res) => {
+  // só Admin ou Docente
   if (req.user.role !== 'Admin' && req.user.role !== 'Docente') {
     return res.status(403).json({ message: 'Acesso negado' });
   }
 
+  /* ---------------- filtro de ano ---------------- */
+  const year = req.query.year || "";          // "1", "2", "3" ou ""
+
+
   try {
-    const [rows] = await db.query(`
+    // SQL base
+    let sql = `
       SELECT 
         sp.Id,
-        s.Name AS Subject, 
-        p.Name AS Professor,
+        s.Name           AS Subject,
+        p.Name           AS Professor,
         s.Tipologia,
         s.TotalHours,
         s.HoursT,
         s.HoursTP,
-        s.HoursP
+        s.HoursP,
+        s.CurricularYear
       FROM SubjectsProfessors sp
       JOIN Subjects s ON s.Id = sp.SubjectFK
-      JOIN People p ON p.Id = sp.PeopleFK
-    `);
+      JOIN People   p ON p.Id = sp.PeopleFK
+    `;
 
+    const params = [];
+
+    // aplica o filtro se veio ?year=
+    if (year) {
+      sql += " WHERE s.CurricularYear = ? ";
+      params.push(year);
+    }
+
+    const [rows] = await db.query(sql, params);
     res.json(rows);
   } catch (err) {
+    console.error("Erro ao buscar subjects-professors:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 // POST: atribuir professor a cadeira
