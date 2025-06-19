@@ -157,11 +157,61 @@ exports.deleteBlock = async (req, res) => {
 exports.getUserSchedules = async (req, res) => {
   try {
     const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const classFilter = req.query.class || '';
+    const curricularYear = req.query.curricularYear || '';
+    const offset = (page - 1) * limit;  
+
+    let baseQuery = `
+
     const [rows] = await db.query(`
       SELECT s.*, c.Name as CourseName
       FROM Schedule s
       LEFT JOIN Courses c ON s.CourseId = c.Id
       WHERE s.CreatedBy = ?
+    `;
+
+    let countQuery = `SELECT COUNT(*) AS total FROM Schedule s WHERE s.CreatedBy = ?`;
+
+    const params = [userId];
+    const countParams = [userId];
+
+    // Adiciona filtros adicionais à query quando estes são especificados
+    if (search) {
+      baseQuery += ` AND s.Name LIKE ?`;
+      countQuery += ` AND s.Name LIKE ?`;
+      params.push(`%${search}%`);
+      countParams.push(`%${search}%`);
+    }
+
+    if (classFilter) {
+      baseQuery += ` AND s.Class = ?`;
+      countQuery += ` AND s.Class = ?`;
+      params.push(classFilter);
+      countParams.push(classFilter);
+    }
+
+    if (curricularYear) {
+      baseQuery += ` AND s.CurricularYear = ?`;
+      countQuery += ` AND s.CurricularYear = ?`;
+      params.push(curricularYear);
+      countParams.push(curricularYear);
+    }
+
+    baseQuery += ` ORDER BY s.CreatedOn DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
+    const [[totalResult]] = await db.query(countQuery, countParams);
+    const total = totalResult.total;
+
+    const [rows] = await db.query(baseQuery, params);
+
+    res.json({
+      items: rows,
+      totalCount: total
+    });
       ORDER BY s.CreatedOn DESC
     `, [userId]);
     res.json(rows);
@@ -169,8 +219,6 @@ exports.getUserSchedules = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-
 
 /**
  * Check if a block conflicts with existing blocks in a schedule
