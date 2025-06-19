@@ -165,6 +165,8 @@ exports.getUserSchedules = async (req, res) => {
     const offset = (page - 1) * limit;  
 
     let baseQuery = `
+
+    const [rows] = await db.query(`
       SELECT s.*, c.Name as CourseName
       FROM Schedule s
       LEFT JOIN Courses c ON s.CourseId = c.Id
@@ -210,6 +212,9 @@ exports.getUserSchedules = async (req, res) => {
       items: rows,
       totalCount: total
     });
+      ORDER BY s.CreatedOn DESC
+    `, [userId]);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
