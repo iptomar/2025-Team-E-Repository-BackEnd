@@ -3,7 +3,7 @@ const router            = express.Router();
 
 const scheduleController = require('../controllers/scheduleController');
 const blocksController   = require('../controllers/blocksController');
-const coursesController  = require('../controllers/coursesController');   // ⬅️ novo
+const coursesController  = require('../controllers/coursesController'); 
 
 const auth = require('../middleware/authMiddleware');
 
@@ -15,7 +15,7 @@ router.post('/check-block-conflict', auth, scheduleController.checkBlockConflict
 router.get('/',          auth, scheduleController.getAllSchedules);
 
 /*  🆕 Rotas específicas do utilizador (colocadas ANTES de /:id)  */
-router.get('/user/courses', auth, coursesController.getUserCourses); // ← novo endpoint
+router.get('/user/courses', auth, coursesController.getUserCourses);
 router.get('/user/me',      auth, scheduleController.getUserSchedules);
 
 router.get('/:id',   auth, scheduleController.getScheduleById);
