@@ -91,3 +91,26 @@ exports.deleteCourse = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// GET /api/user/courses
+exports.getUserCourses = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await db.query(
+      `SELECT c.Id AS id, c.Name AS name
+       FROM Courses c
+       INNER JOIN ProfessorsCourses pc ON pc.CourseFK = c.Id
+       WHERE pc.PeopleFK = ?
+       ORDER BY c.Name`,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar cursos do utilizador:", err);
+    res.status(500).json({ error: 'Erro interno ao obter cursos.' });
+  }
+};
+
+
