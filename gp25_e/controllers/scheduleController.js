@@ -156,13 +156,14 @@ exports.deleteBlock = async (req, res) => {
 // Obter calendários do utilizador
 exports.getUserSchedules = async (req, res) => {
   try {
-    const userId        = req.user.id;
-    const page          = parseInt(req.query.page) || 1;
-    const limit         = parseInt(req.query.limit) || 5;
-    const search        = req.query.search || '';
-    const classFilter   = req.query.class || '';
-    const curricularYear= req.query.curricularYear || '';
-    const offset        = (page - 1) * limit;
+    const userId         = req.user.id;
+    const page           = parseInt(req.query.page) || 1;
+    const limit          = parseInt(req.query.limit) || 5;
+    const search         = req.query.search || '';
+    const classFilter    = req.query.class || '';
+    const curricularYear = req.query.curricularYear || '';
+    const courseId       = req.query.course || ''; // <--- novo
+    const offset         = (page - 1) * limit;
 
     // ---------------- SQL base ----------------
     let baseQuery = `
@@ -178,8 +179,8 @@ exports.getUserSchedules = async (req, res) => {
       WHERE s.CreatedBy = ?
     `;
 
-    const params       = [userId];
-    const countParams  = [userId];
+    const params      = [userId];
+    const countParams = [userId];
 
     // ---------------- filtros dinâmicos ----------------
     if (search) {
@@ -203,6 +204,13 @@ exports.getUserSchedules = async (req, res) => {
       countParams.push(curricularYear);
     }
 
+    if (courseId) {
+      baseQuery  += ' AND s.CourseId = ?';
+      countQuery += ' AND s.CourseId = ?';
+      params.push(courseId);
+      countParams.push(courseId);
+    }
+
     // paginação e ordenação
     baseQuery += ' ORDER BY s.CreatedOn DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
@@ -216,6 +224,7 @@ exports.getUserSchedules = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 /**
