@@ -91,3 +91,23 @@ exports.deleteCourse = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// GET /api/user/courses
+exports.getUserCourses = async (req, res) => {
+    try {
+        const userId = req.user.id; // assumindo que vem do middleware de autenticação
+
+        const [rows] = await db.query(
+            `SELECT DISTINCT c.Id, c.Name
+             FROM Courses c
+             INNER JOIN Enrollments e ON e.CourseFK = c.Id
+             WHERE e.UserFK = ?`,
+            [userId]
+        );
+
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
