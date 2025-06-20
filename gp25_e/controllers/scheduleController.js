@@ -1,6 +1,6 @@
 const db = require('../models/db');
 
-// Creates a new schedule
+// POST /api/schedules
 exports.createSchedule = async (req, res) => {
   const {
     courseId,
@@ -12,22 +12,66 @@ exports.createSchedule = async (req, res) => {
     createdBy
   } = req.body;
 
+  /* 1. Datas válidas */
   if (new Date(endDate) <= new Date(startDate)) {
-    return res.status(400).json({ error: 'A data de fim deve ser posterior à data de início.' });
+    return res.status(400).json({
+      error: "A data de fim deve ser posterior à data de início."
+    });
   }
 
   try {
-    const [result] = await db.query(
-      `INSERT INTO Schedule (CourseId, Name, StartDate, EndDate, CurricularYear, Class, CreatedBy, CreatedOn)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [courseId, name, startDate, endDate, curricularYear, className, createdBy]
+    /* 2. Conflitos no mesmo Curso + Turma + Ano */
+    const [conflicts] = await db.query(
+      `
+      SELECT 1
+        FROM Schedule
+       WHERE CourseId       = ?          -- ← Curso
+         AND Class          = ?          -- ← Turma
+         AND CurricularYear = ?          -- ← Ano curricular
+         AND ? <= EndDate                -- novo início antes/dentro
+         AND ? >= StartDate              -- novo fim depois/dentro
+       LIMIT 1
+      `,
+      [courseId, className, curricularYear, startDate, endDate]
     );
 
-    res.status(201).json({ message: 'Schedule criado com sucesso', scheduleId: result.insertId });
+    if (conflicts.length) {
+      return res.status(409).json({
+        error:
+          "Já existe um horário para este curso, turma e ano curricular que se sobrepõe às datas indicadas."
+      });
+    }
+
+    /* 3. Criar horário */
+    const [result] = await db.query(
+      `
+      INSERT INTO Schedule
+        (CourseId, Name, StartDate, EndDate,
+         CurricularYear, Class, CreatedBy, CreatedOn)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+      `,
+      [
+        courseId,
+        name,
+        startDate,
+        endDate,
+        curricularYear,
+        className,
+        createdBy
+      ]
+    );
+
+    return res
+      .status(201)
+      .json({ message: "Schedule criado com sucesso", scheduleId: result.insertId });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Erro ao criar schedule:", err);
+    return res.status(500).json({ error: err.message });
   }
 };
+
+
+
 
 // Listar todos os calendários
 exports.getAllSchedules = async (req, res) => {
