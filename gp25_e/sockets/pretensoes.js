@@ -1,4 +1,4 @@
-const calendarioBuffer = [];
+let calendarioBuffer = [];
 const db = require("../models/db");
 
 // Verifica se há sobreposição entre dois intervalos de tempo (HH:mm:ss)
@@ -12,9 +12,17 @@ module.exports = (io) => {
 
     // ➕ Adicionar aula ao buffer
     socket.on("adicionarSala", (novaAula) => {
-      const { roomId, startHour, endHour, dayOfWeek, professorName } = novaAula;
+      const {
+        roomId,
+        startHour,
+        endHour,
+        dayOfWeek,
+        professorName,
+        professorId,
+        userEmail,
+      } = novaAula;
 
-      // Verifica conflitos no buffer
+      // Verifica conflitos no buffer (só sala, não professor aqui)
       const conflito = calendarioBuffer.find((aula) => {
         return (
           aula.roomId === roomId &&
@@ -38,6 +46,8 @@ module.exports = (io) => {
         startHour,
         endHour,
         professorName,
+        professorId,
+        userEmail,
       });
       console.log("Adicionado ao buffer:", {
         roomId,
@@ -45,6 +55,8 @@ module.exports = (io) => {
         startHour,
         endHour,
         professorName,
+        professorId,
+        userEmail
       });
       io.emit("bufferAtualizado", calendarioBuffer);
       socket.emit("respostaBuffer", { status: "ok" });
@@ -69,28 +81,62 @@ module.exports = (io) => {
       io.emit("bufferAtualizado", calendarioBuffer);
     });
 
-   // Verificar conflitos para professor
-socket.on(
-  "verificarConflitosProfessor",
-  async ({
-    professorId,
-    eventStart,
-    eventEnd,
-    scheduleStartDate,
-    scheduleEndDate,
-  }) => {
-    try {
-      const dayOfWeek = new Date(eventStart).getDay() || 7;
-      const startHour = new Date(eventStart).toTimeString().slice(0, 8);
-      const endHour = new Date(eventEnd).toTimeString().slice(0, 8);
+    socket.on("limparBufferPorEmail", ({ email }) => {
+      const antes = calendarioBuffer.length;
+      // Remove do buffer todos os blocos criados por este email
+      calendarioBuffer = calendarioBuffer.filter(
+        (bloco) => bloco.userEmail !== email
+      );
+      const depois = calendarioBuffer.length;
 
-      console.log("🟡 Verificar professor ocupado entre datas:", scheduleStartDate, scheduleEndDate);
-      console.log("Detalhes da requisição - Professor ID:", professorId, "Início evento:", eventStart, "Fim evento:", eventEnd);
-      console.log("Dia da semana:", dayOfWeek, "Horário início:", startHour, "Horário fim:", endHour);
+      console.log(
+        `Buffer limpo para ${email}: ${antes} -> ${depois} blocos restantes`
+      );
 
-      // 1. Buscar TODOS os blocos do professor dentro das datas fornecidas
-      const [todosOsBlocosProfessor] = await db.query(
-        `
+      // Emite para todos os clientes que o buffer foi atualizado
+      io.emit("bufferAtualizado", calendarioBuffer);
+    });
+
+    // Verificar conflitos para professor
+    socket.on(
+      "verificarConflitosProfessor",
+      async ({
+        professorId,
+        eventStart,
+        eventEnd,
+        scheduleStartDate,
+        scheduleEndDate,
+      }) => {
+        try {
+          const dayOfWeek = new Date(eventStart).getDay() || 7;
+          const startHour = new Date(eventStart).toTimeString().slice(0, 8);
+          const endHour = new Date(eventEnd).toTimeString().slice(0, 8);
+
+          console.log(
+            "🟡 Verificar professor ocupado entre datas:",
+            scheduleStartDate,
+            scheduleEndDate
+          );
+          console.log(
+            "Detalhes da requisição - Professor ID:",
+            professorId,
+            "Início evento:",
+            eventStart,
+            "Fim evento:",
+            eventEnd
+          );
+          console.log(
+            "Dia da semana:",
+            dayOfWeek,
+            "Horário início:",
+            startHour,
+            "Horário fim:",
+            endHour
+          );
+
+          // 1. Buscar blocos da BD para o professor
+          const [todosOsBlocosProfessor] = await db.query(
+            `
         SELECT b.*
         FROM Block b
         JOIN Schedule s ON b.ScheduleFK = s.Id
@@ -99,174 +145,310 @@ socket.on(
           AND s.StartDate <= ?
           AND s.EndDate >= ?
         `,
-        [professorId, scheduleEndDate, scheduleStartDate]
-      );
+            [professorId, scheduleEndDate, scheduleStartDate]
+          );
 
-      console.log(`Total de blocos encontrados para o professor ${professorId}:`, todosOsBlocosProfessor.length);
-      console.table(todosOsBlocosProfessor, ["Id", "SubjectFK", "StartHour", "EndHour", "DayOfWeek", "ScheduleFK"]);
+          console.log(
+            `Total de blocos encontrados para o professor ${professorId}:`,
+            todosOsBlocosProfessor.length
+          );
+          console.table(todosOsBlocosProfessor, [
+            "Id",
+            "SubjectFK",
+            "StartHour",
+            "EndHour",
+            "DayOfWeek",
+            "ScheduleFK",
+          ]);
 
-      // 2. Identificar os blocos que colidem diretamente (conflitos)
-      const blocosConflitantes = todosOsBlocosProfessor.filter(
-        (b) =>
-          b.DayOfWeek === dayOfWeek &&
-          isTimeOverlapping(b.StartHour, b.EndHour, startHour, endHour)
-      );
+          // 2. Filtrar blocos do buffer para este professor e horário
+          const blocosBuffer = calendarioBuffer.filter(
+            (bloco) =>
+              bloco.professorId === professorId &&
+              bloco.dayOfWeek === dayOfWeek &&
+              isTimeOverlapping(
+                bloco.startHour,
+                bloco.endHour,
+                startHour,
+                endHour
+              )
+          );
 
-      console.log(`Blocos conflitantes encontrados: ${blocosConflitantes.length}`);
-      console.table(blocosConflitantes, ["Id", "SubjectFK", "StartHour", "EndHour", "DayOfWeek", "ScheduleFK"]);
+          // 3. Identificar blocos conflitantes da BD
+          const blocosConflitantesBd = todosOsBlocosProfessor.filter(
+            (b) =>
+              b.DayOfWeek === dayOfWeek &&
+              isTimeOverlapping(b.StartHour, b.EndHour, startHour, endHour)
+          );
 
-      // 3. Marcar cada bloco com flag IsConflict para frontend
-      const blocosFinal = todosOsBlocosProfessor.map((b) => ({
-        ...b,
-        IsConflict: blocosConflitantes.some((conf) => conf.Id === b.Id),
-      }));
+          console.log(
+            `Blocos conflitantes BD encontrados: ${blocosConflitantesBd.length}`
+          );
+          console.table(blocosConflitantesBd, [
+            "Id",
+            "SubjectFK",
+            "StartHour",
+            "EndHour",
+            "DayOfWeek",
+            "ScheduleFK",
+          ]);
 
-      console.table(
-        blocosFinal.map(({ Id, SubjectFK, StartHour, EndHour, DayOfWeek, ScheduleFK, IsConflict }) => ({
-          Id,
-          SubjectFK,
-          StartHour,
-          EndHour,
-          DayOfWeek,
-          ScheduleFK,
-          IsConflict,
-        }))
-      );
+          // 4. Marcar blocos BD como conflito se colidirem com BD ou buffer
+          const blocosFinal = todosOsBlocosProfessor.map((b) => ({
+            ...b,
+            IsConflict:
+              blocosConflitantesBd.some((conf) => conf.Id === b.Id) ||
+              blocosBuffer.some(
+                (conf) =>
+                  conf.dayOfWeek === b.DayOfWeek &&
+                  conf.startHour === b.StartHour &&
+                  conf.endHour === b.EndHour
+              ),
+          }));
 
-      // 4. Enviar TODOS os blocos (conflitos e ocupados) só se houver conflito, senão lista vazia
-      if (blocosConflitantes.length > 0) {
-        console.log("Enviando todos os blocos com flags de conflito para o frontend");
-        socket.emit("respostaConflitosProfessor", {
-          professorId,
-          blocos: blocosFinal,
-          total: blocosConflitantes.length,
-        });
-      } else {
-        console.log(`Nenhum conflito detectado para o professor ${professorId}, enviando lista vazia.`);
-        socket.emit("respostaConflitosProfessor", {
-          professorId,
-          blocos: [],
-          total: 0,
-        });
+          // Formata blocos do buffer para o mesmo formato que blocosFinal, incluindo IsConflict = true
+          const blocosBufferFormatados = blocosBuffer.map((b, idx) => ({
+            Id: `buffer-${idx}`, // id fictício para o buffer
+            SubjectFK: null,
+            StartHour: b.startHour,
+            EndHour: b.endHour,
+            DayOfWeek: b.dayOfWeek,
+            ScheduleFK: null,
+            IsConflict: true,
+          }));
+
+          // Junta blocos BD com blocos do buffer
+          const blocosParaEnviar = blocosFinal.concat(blocosBufferFormatados);
+
+          // Verifica se algum bloco tem conflito
+          const temConflito = blocosParaEnviar.some(
+            (b) => b.IsConflict === true
+          );
+
+          if (temConflito) {
+            console.log(
+              "Enviando todos os blocos com flags de conflito para o frontend"
+            );
+            console.table(blocosParaEnviar);
+            socket.emit("respostaConflitosProfessor", {
+              professorId,
+              blocos: blocosParaEnviar,
+              total: blocosParaEnviar.filter((b) => b.IsConflict).length,
+            });
+          } else {
+            console.log(
+              `Nenhum conflito detectado para professor ${professorId}, enviando lista vazia.`
+            );
+            socket.emit("respostaConflitosProfessor", {
+              professorId,
+              blocos: [],
+              total: 0,
+            });
+          }
+        } catch (err) {
+          console.error("❌ Erro ao verificar conflitos de professor:", err);
+          socket.emit("respostaConflitosProfessor", {
+            professorId,
+            erro: "Erro ao verificar conflitos de professor",
+            blocos: [],
+            total: 0,
+          });
+        }
       }
-    } catch (err) {
-      console.error("❌ Erro ao verificar conflitos de professor:", err);
-      socket.emit("respostaConflitosProfessor", {
-        professorId,
-        erro: "Erro ao verificar conflitos de professor",
-        blocos: [],
-        total: 0,
-      });
-    }
-  }
-);
+    );
 
+    // Verificar conflitos para sala
+    socket.on(
+      "verificarConflitosSala",
+      async ({
+        roomId,
+        eventStart,
+        eventEnd,
+        scheduleStartDate,
+        scheduleEndDate,
+      }) => {
+        try {
+          const dayOfWeek = new Date(eventStart).getDay() || 7;
+          const startHour = new Date(eventStart).toTimeString().slice(0, 8);
+          const endHour = new Date(eventEnd).toTimeString().slice(0, 8);
 
+          console.log(
+            "🟡 Verificar sala ocupada entre datas:",
+            scheduleStartDate,
+            scheduleEndDate
+          );
+          console.log(
+            "Detalhes da requisição - Sala:",
+            roomId,
+            "Início evento:",
+            eventStart,
+            "Fim evento:",
+            eventEnd
+          );
+          console.log(
+            "Dia da semana:",
+            dayOfWeek,
+            "Horário início:",
+            startHour,
+            "Horário fim:",
+            endHour
+          );
 
-// Verificar conflitos para sala
-socket.on(
-  "verificarConflitosSala",
-  async ({
-    roomId,
-    eventStart,
-    eventEnd,
-    scheduleStartDate,
-    scheduleEndDate,
-  }) => {
-    try {
-      console.log("🟡 Verificar sala ocupada entre datas:", scheduleStartDate, scheduleEndDate);
-      console.log("Detalhes da requisição - Sala:", roomId, "Início evento:", eventStart, "Fim evento:", eventEnd);
+          // 1. Buscar blocos da BD para a sala
+          const [todosOsBlocosSala] = await db.query(
+            `
+            SELECT * FROM Block
+            WHERE ClassroomFK = ?
+              AND EXISTS (
+                SELECT 1
+                FROM Schedule s
+                WHERE s.Id = Block.ScheduleFK
+                  AND s.StartDate <= ?
+                  AND s.EndDate >= ?
+              )
+            `,
+            [roomId, scheduleEndDate, scheduleStartDate]
+          );
 
-      const dayOfWeek = new Date(eventStart).getDay() || 7;
-      const startHour = new Date(eventStart).toTimeString().slice(0, 8);
-      const endHour = new Date(eventEnd).toTimeString().slice(0, 8);
+          console.log(
+            `Total de blocos encontrados para a sala ${roomId}: ${todosOsBlocosSala.length}`
+          );
+          console.table(todosOsBlocosSala, [
+            "Id",
+            "SubjectFK",
+            "StartHour",
+            "EndHour",
+            "DayOfWeek",
+            "ClassroomFK",
+            "CreatedBy",
+          ]);
 
-      console.log("Dia da semana:", dayOfWeek, "Horário início:", startHour, "Horário fim:", endHour);
+          // 2. Buscar blocos do buffer para a sala
+          const blocosBuffer = calendarioBuffer.filter(
+            (bloco) =>
+              bloco.roomId === roomId &&
+              bloco.dayOfWeek === dayOfWeek &&
+              isTimeOverlapping(
+                bloco.startHour,
+                bloco.endHour,
+                startHour,
+                endHour
+              )
+          );
 
-      // 1. Buscar TODOS os blocos dessa sala dentro das datas fornecidas
-      const [todosOsBlocosSala] = await db.query(
-        `
-        SELECT * FROM Block
-        WHERE ClassroomFK = ?
-          AND EXISTS (
-            SELECT 1
-            FROM Schedule s
-            WHERE s.Id = Block.ScheduleFK
-              AND s.StartDate <= ?
-              AND s.EndDate >= ?
-          )
-        `,
-        [roomId, scheduleEndDate, scheduleStartDate]
-      );
+          console.log(
+            `Total de blocos encontrados no buffer para a sala ${roomId}: ${blocosBuffer.length}`
+          );
+          console.table(blocosBuffer, [
+            "roomId",
+            "professorId",
+            "startHour",
+            "endHour",
+            "dayOfWeek",
+          ]);
 
-      console.log(`Total de blocos encontrados para a sala ${roomId}: ${todosOsBlocosSala.length}`);
+          // 3. Encontrar blocos conflitantes na BD para a sala
+          const blocosConflitantesBd = todosOsBlocosSala.filter(
+            (b) =>
+              b.DayOfWeek === dayOfWeek &&
+              isTimeOverlapping(b.StartHour, b.EndHour, startHour, endHour)
+          );
 
-      // Exibir todos os blocos em tabela
-      console.table(todosOsBlocosSala, ["Id", "SubjectFK", "StartHour", "EndHour", "DayOfWeek", "ClassroomFK", "CreatedBy"]);
+          console.log(
+            `Blocos conflitantes encontrados na BD para a sala ${roomId}: ${blocosConflitantesBd.length}`
+          );
+          console.table(blocosConflitantesBd, [
+            "Id",
+            "SubjectFK",
+            "StartHour",
+            "EndHour",
+            "DayOfWeek",
+            "ClassroomFK",
+            "CreatedBy",
+          ]);
 
-      // 2. Identificar os blocos que colidem diretamente (conflitos)
-      const blocosConflitantes = todosOsBlocosSala.filter(
-        (b) =>
-          b.DayOfWeek === dayOfWeek &&
-          isTimeOverlapping(b.StartHour, b.EndHour, startHour, endHour)
-      );
+          // 4. Marcar cada bloco da BD como conflito se colidir com blocos da BD ou do buffer
+          const blocosFinal = todosOsBlocosSala.map((b) => ({
+            ...b,
+            IsConflict:
+              blocosConflitantesBd.some((conf) => conf.Id === b.Id) ||
+              blocosBuffer.some(
+                (conf) =>
+                  conf.dayOfWeek === b.DayOfWeek &&
+                  conf.startHour === b.StartHour &&
+                  conf.endHour === b.EndHour
+              ),
+          }));
 
-      console.log(`Blocos conflitantes encontrados: ${blocosConflitantes.length}`);
+          // Formatar os blocos do buffer para ter a mesma estrutura dos da BD
+          const blocosBufferFormatados = blocosBuffer.map((bloco, idx) => ({
+            Id: `buffer-${idx}`,
+            SubjectFK: null,
+            StartHour: bloco.startHour,
+            EndHour: bloco.endHour,
+            DayOfWeek: bloco.dayOfWeek,
+            ClassroomFK: bloco.roomId || null,
+            CreatedBy: bloco.professorName || "buffer",
+            IsConflict: true, // estes são blocos do buffer, que já estão a impedir uso, logo são conflitos
+          }));
 
-      // Exibir blocos conflitantes em tabela
-      console.table(blocosConflitantes, ["Id", "SubjectFK", "StartHour", "EndHour", "DayOfWeek", "ClassroomFK", "CreatedBy"]);
+          // Juntar blocos da BD com os do buffer
+          const blocosParaEnviar = blocosFinal.concat(blocosBufferFormatados);
 
-      // 3. Marcar cada bloco com flag IsConflict para frontend
-      const blocosFinal = todosOsBlocosSala.map((b) => ({
-        ...b,
-        IsConflict: blocosConflitantes.some((conf) => conf.Id === b.Id),
-      }));
+          // Só enviar se houver algum conflito (em BD ou buffer)
+          const temConflito =
+            blocosParaEnviar.some((b) => b.IsConflict) ||
+            blocosBufferFormatados.length > 0;
 
-      // Exibir blocos finais com flag IsConflict
-      console.table(
-        blocosFinal.map(({ Id, SubjectFK, StartHour, EndHour, DayOfWeek, ClassroomFK, CreatedBy, IsConflict }) => ({
-          Id,
-          SubjectFK,
-          StartHour,
-          EndHour,
-          DayOfWeek,
-          ClassroomFK,
-          CreatedBy,
-          IsConflict,
-        }))
-      );
+          console.log(`Blocos finais com flag IsConflict para sala ${roomId}:`);
+          console.table(
+            blocosParaEnviar.map(
+              ({
+                Id,
+                SubjectFK,
+                StartHour,
+                EndHour,
+                DayOfWeek,
+                ClassroomFK,
+                CreatedBy,
+                IsConflict,
+              }) => ({
+                Id,
+                SubjectFK,
+                StartHour,
+                EndHour,
+                DayOfWeek,
+                ClassroomFK,
+                CreatedBy,
+                IsConflict,
+              })
+            )
+          );
 
-      // Só enviar todos os blocos se houver pelo menos 1 conflito
-      if (blocosConflitantes.length > 0) {
-        console.log("Enviando todos os blocos com flags de conflito para o frontend");
-        socket.emit("respostaConflitosSala", {
-          sala: roomId,
-          blocos: blocosFinal,
-          total: blocosConflitantes.length,
-        });
-      } else {
-        console.log(`Nenhum conflito detectado para sala ${roomId}, enviando lista vazia.`);
-        socket.emit("respostaConflitosSala", {
-          sala: roomId,
-          blocos: [],
-          total: 0,
-        });
+          if (temConflito) {
+            socket.emit("respostaConflitosSala", {
+              sala: roomId,
+              blocos: blocosFinal,
+              total: blocosFinal.filter((b) => b.IsConflict).length,
+            });
+          } else {
+            socket.emit("respostaConflitosSala", {
+              sala: roomId,
+              blocos: [],
+              total: 0,
+            });
+          }
+        } catch (err) {
+          console.error("❌ Erro ao verificar conflitos:", err);
+          socket.emit("respostaConflitosSala", {
+            sala: roomId,
+            erro: "Erro ao verificar conflitos",
+            blocos: [],
+            total: 0,
+          });
+        }
       }
-    } catch (err) {
-      console.error("❌ Erro ao verificar conflitos:", err);
-      socket.emit("respostaConflitosSala", {
-        sala: roomId,
-        erro: "Erro ao verificar conflitos",
-        blocos: [],
-        total: 0,
-      });
-    }
-  }
-);
-
-
-
-
+    );
 
     // Desconexão
     socket.on("disconnect", () => {
