@@ -1,40 +1,40 @@
-const db = require('../models/db');
-
+const db = require("../models/db");
 
 exports.getCourseByProfessorId = async (req, res) => {
-  if (req.user.role !== 'Admin' && req.user.role !== 'Docente') return res.status(403).json({ message: 'Acesso negado' });
+  if (req.user.role !== "Admin" && req.user.role !== "Docente")
+    return res.status(403).json({ message: "Acesso negado" });
   try {
     // Mostra o(s) curso(s) a que pertence o professor
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
         SELECT c.Name, pc.CourseFK
         FROM ProfessorsCourses as pc
         JOIN Courses as c ON pc.CourseFK = c.id
-        WHERE pc.PeopleFK = ?;`, [req.user.id]);
+        WHERE pc.PeopleFK = ?;`,
+      [req.user.id]
+    );
     res.json(rows);
-  }
-  catch (err) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+};
 
 // GET /api/subjects-professors?year=1
 exports.getAllSubjectsProfessors = async (req, res) => {
-  // só Admin ou Docente
-  if (req.user.role !== 'Admin' && req.user.role !== 'Docente') {
-    return res.status(403).json({ message: 'Acesso negado' });
+  if (req.user.role !== "Admin" && req.user.role !== "Docente") {
+    return res.status(403).json({ message: "Acesso negado" });
   }
 
-  /* ---------------- filtro de ano ---------------- */
-  const year = req.query.year || "";          // "1", "2", "3" ou ""
-
+  const year = req.query.year || "";
 
   try {
-    // SQL base
     let sql = `
       SELECT 
         sp.Id,
-        s.Name           AS Subject,
-        p.Name           AS Professor,
+        s.Id AS IdSubject,
+        s.Name AS Subject,
+        p.Id AS professorId,      -- <--- adiciona esta linha
+        p.Name AS Professor,
         s.Tipologia,
         s.TotalHours,
         s.HoursT,
@@ -43,12 +43,11 @@ exports.getAllSubjectsProfessors = async (req, res) => {
         s.CurricularYear
       FROM SubjectsProfessors sp
       JOIN Subjects s ON s.Id = sp.SubjectFK
-      JOIN People   p ON p.Id = sp.PeopleFK
+      JOIN People p ON p.Id = sp.PeopleFK
     `;
 
     const params = [];
 
-    // aplica o filtro se veio ?year=
     if (year) {
       sql += " WHERE s.CurricularYear = ? ";
       params.push(year);
@@ -63,10 +62,10 @@ exports.getAllSubjectsProfessors = async (req, res) => {
 };
 
 
-
 // POST: atribuir professor a cadeira
 exports.assignProfessorToSubject = async (req, res) => {
-  if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Acesso negado' });
+  if (req.user.role !== "Admin")
+    return res.status(403).json({ message: "Acesso negado" });
 
   const { subjectId, professorId } = req.body;
   try {
@@ -75,7 +74,9 @@ exports.assignProfessorToSubject = async (req, res) => {
        VALUES (?, ?, ?, NOW())`,
       [subjectId, professorId, req.user.email]
     );
-    res.status(201).json({ message: 'Professor atribuído à cadeira com sucesso' });
+    res
+      .status(201)
+      .json({ message: "Professor atribuído à cadeira com sucesso" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -83,12 +84,13 @@ exports.assignProfessorToSubject = async (req, res) => {
 
 // DELETE: remover atribuição
 exports.removeProfessorFromSubject = async (req, res) => {
-  if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Acesso negado' });
+  if (req.user.role !== "Admin")
+    return res.status(403).json({ message: "Acesso negado" });
 
   const id = req.params.id;
   try {
-    await db.query('DELETE FROM SubjectsProfessors WHERE Id = ?', [id]);
-    res.json({ message: 'Associação removida com sucesso' });
+    await db.query("DELETE FROM SubjectsProfessors WHERE Id = ?", [id]);
+    res.json({ message: "Associação removida com sucesso" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
