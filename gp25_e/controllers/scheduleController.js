@@ -1,5 +1,10 @@
 const db = require('../models/db');
 
+function toMinutes(timeStr) {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
 // POST /api/schedules
 exports.createSchedule = async (req, res) => {
   const {
@@ -12,7 +17,6 @@ exports.createSchedule = async (req, res) => {
     createdBy
   } = req.body;
 
-  /* 1. Datas válidas */
   if (new Date(endDate) <= new Date(startDate)) {
     return res.status(400).json({
       error: "A data de fim deve ser posterior à data de início."
@@ -20,50 +24,32 @@ exports.createSchedule = async (req, res) => {
   }
 
   try {
-    /* 2. Conflitos no mesmo Curso + Turma + Ano */
     const [conflicts] = await db.query(
-      `
-      SELECT 1
-        FROM Schedule
-       WHERE CourseId       = ?          -- ← Curso
-         AND Class          = ?          -- ← Turma
-         AND CurricularYear = ?          -- ← Ano curricular
-         AND ? <= EndDate                -- novo início antes/dentro
-         AND ? >= StartDate              -- novo fim depois/dentro
-       LIMIT 1
-      `,
+      `SELECT Id, Name FROM Schedule
+       WHERE CourseId = ? AND Class = ? AND CurricularYear = ?
+         AND ? <= EndDate AND ? >= StartDate
+       LIMIT 1`,
       [courseId, className, curricularYear, startDate, endDate]
     );
 
     if (conflicts.length) {
       return res.status(409).json({
-        error:
-          "Já existe um horário para este curso, turma e ano curricular que se sobrepõe às datas indicadas."
+        error: `Conflito com o horário existente: ${conflicts[0].Name}`
       });
     }
 
-    /* 3. Criar horário */
     const [result] = await db.query(
-      `
-      INSERT INTO Schedule
-        (CourseId, Name, StartDate, EndDate,
-         CurricularYear, Class, CreatedBy, CreatedOn)
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-      `,
-      [
-        courseId,
-        name,
-        startDate,
-        endDate,
-        curricularYear,
-        className,
-        createdBy
-      ]
+      `INSERT INTO Schedule
+       (CourseId, Name, StartDate, EndDate,
+        CurricularYear, Class, CreatedBy, CreatedOn)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [courseId, name, startDate, endDate, curricularYear, className, createdBy]
     );
 
-    return res
-      .status(201)
-      .json({ message: "Schedule criado com sucesso", scheduleId: result.insertId });
+    return res.status(201).json({
+      message: "Schedule criado com sucesso",
+      scheduleId: result.insertId
+    });
   } catch (err) {
     console.error("Erro ao criar schedule:", err);
     return res.status(500).json({ error: err.message });
@@ -159,28 +145,52 @@ exports.deleteSchedule = async (req, res) => {
 exports.addBlock = async (req, res) => {
   const { subjectId, scheduleId, classroomId, startHour, endHour, dayOfWeek, createdBy } = req.body;
 
-  console.log(req.body);
-
-  // Validação lógica
   if (!subjectId || !scheduleId || !classroomId || !startHour || !endHour || !dayOfWeek) {
     return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
   }
 
-  if (new Date(`1970-01-01T${endHour}`) <= new Date(`1970-01-01T${startHour}`)) {
+  if (toMinutes(endHour) <= toMinutes(startHour)) {
     return res.status(400).json({ message: 'Hora de fim tem de ser posterior à hora de início.' });
   }
 
   if (dayOfWeek < 1 || dayOfWeek > 6) {
-    return res.status(400).json({ message: 'O dia da semana tem de estar entre 1 (segunda) e 6 (sábado).' });
+    return res.status(400).json({ message: 'O dia da semana tem de estar entre 1 e 6.' });
   }
 
   try {
+    const [roomConflicts] = await db.query(`
+      SELECT * FROM Block
+      WHERE ClassroomFK = ? AND DayOfWeek = ?
+        AND StartHour < ? AND EndHour > ?
+    `, [classroomId, dayOfWeek, endHour, startHour]);
+
+    const [professorConflicts] = await db.query(`
+      SELECT b.* 
+      FROM Block b
+      JOIN SubjectsProfessors sp_new ON sp_new.SubjectFK = ?
+      JOIN SubjectsProfessors sp_existing ON sp_existing.SubjectFK = b.SubjectFK
+      WHERE b.DayOfWeek = ?
+        AND sp_existing.PeopleFK = sp_new.PeopleFK
+        AND b.StartHour < ? AND b.EndHour > ?
+    `, [subjectId, dayOfWeek, endHour, startHour]);
+
+    if (roomConflicts.length > 0 || professorConflicts.length > 0) {
+      return res.status(409).json({
+        message: 'Conflito detectado ao adicionar bloco.',
+        conflicts: [
+          ...(roomConflicts.length ? [{ type: 'room', conflicts: roomConflicts }] : []),
+          ...(professorConflicts.length ? [{ type: 'professor', conflicts: professorConflicts }] : [])
+        ]
+      });
+    }
+
     await db.query(
       `INSERT INTO Block (SubjectFK, StartHour, EndHour, DayOfWeek, ScheduleFK, ClassroomFK, CreatedBy, CreatedOn)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [subjectId, startHour, endHour, dayOfWeek, scheduleId, classroomId, createdBy]
     );
-    res.status(201).json({ message: 'Bloco adicionado ao calendário' });
+
+    res.status(201).json({ message: 'Bloco adicionado com sucesso.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
