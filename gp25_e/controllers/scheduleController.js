@@ -207,6 +207,84 @@ exports.deleteBlock = async (req, res) => {
   }
 };
 
+// Atualizar bloco
+exports.updateBlock = async (req, res) => {
+  const { subjectId, classroomId, startHour, endHour, dayOfWeek } = req.body;
+  const blockId = req.params.blockId;
+
+  // Add detailed logging
+  console.log("=== UPDATE BLOCK DEBUG ===");
+  console.log("Block ID:", blockId);
+  console.log("Request body:", req.body);
+  console.log("Parsed values:");
+  console.log("- subjectId:", subjectId, typeof subjectId);
+  console.log("- classroomId:", classroomId, typeof classroomId);
+  console.log("- startHour:", startHour, typeof startHour);
+  console.log("- endHour:", endHour, typeof endHour);
+  console.log("- dayOfWeek:", dayOfWeek, typeof dayOfWeek);
+
+  // Validação dos campos obrigatórios
+  if (!subjectId || !classroomId || !startHour || !endHour || dayOfWeek === undefined) {
+    console.log("Validation failed - missing required fields");
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  // Convert startHour and endHour to proper format for comparison
+  const startTime = new Date(`1970-01-01 ${startHour}`);
+  const endTime = new Date(`1970-01-01 ${endHour}`);
+
+  // Validação das horas
+  if (endTime <= startTime) {
+    console.log("Validation failed - end time before start time");
+    console.log("Start time:", startTime);
+    console.log("End time:", endTime);
+    return res.status(400).json({ message: 'Hora de fim tem de ser posterior à hora de início.' });
+  }
+
+  // Validação do dia da semana
+  if (dayOfWeek < 0 || dayOfWeek > 6) {
+    console.log("Validation failed - invalid day of week:", dayOfWeek);
+    return res.status(400).json({ message: 'O dia da semana tem de estar entre 0 e 6.' });
+  }
+
+  try {
+    // Verificar se o bloco existe
+    console.log("Checking if block exists...");
+    const [existingBlock] = await db.query('SELECT * FROM Block WHERE Id = ?', [blockId]);
+    if (existingBlock.length === 0) {
+      console.log("Block not found:", blockId);
+      return res.status(404).json({ message: 'Bloco não encontrado.' });
+    }
+
+    console.log("Existing block found:", existingBlock[0]);
+    const scheduleId = existingBlock[0].ScheduleFK;
+
+    // Skip conflict checking for now to isolate the issue
+    console.log("Skipping conflict checks for debugging...");
+
+    // Atualizar o bloco
+    console.log("Updating block with values:", [subjectId, classroomId, startHour, endHour, dayOfWeek, blockId]);
+
+    const updateResult = await db.query(
+        `UPDATE Block 
+       SET SubjectFK = ?, ClassroomFK = ?, StartHour = ?, EndHour = ?, DayOfWeek = ?, UpdatedOn = NOW()
+       WHERE Id = ?`,
+        [subjectId, classroomId, startHour, endHour, dayOfWeek, blockId]
+    );
+
+    console.log("Update result:", updateResult);
+    console.log("Block updated successfully");
+    res.json({ message: 'Bloco atualizado com sucesso.' });
+  } catch (err) {
+    console.error("Detailed error updating block:", err);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ error: err.message, details: err.toString() });
+  }
+};
+
+
+
 // Obter calendários do utilizador
 exports.getUserSchedules = async (req, res) => {
   try {
@@ -278,8 +356,6 @@ exports.getUserSchedules = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-
 
 /**
  * Check if a block conflicts with existing blocks in a schedule

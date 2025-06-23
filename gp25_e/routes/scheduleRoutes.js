@@ -26,5 +26,6 @@ router.delete('/:id',auth, scheduleController.deleteSchedule);
 /* ---------- Blocos dentro de um horário ---------- */
 router.post('/:id/blocks',      auth, scheduleController.addBlock);     // adicionar bloco
 router.delete('/blocks/:blockId', auth, scheduleController.deleteBlock);// apagar bloco
+router.put('/blocks/:blockId',       auth, scheduleController.updateBlock);  // atualizar bloco
 
 module.exports = router;
