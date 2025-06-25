@@ -62,25 +62,55 @@ exports.getAllSubjectsProfessors = async (req, res) => {
 };
 
 
-// POST: atribuir professor a cadeira
+// POST: atribuir professor a cadeira e garantir que também está no curso
 exports.assignProfessorToSubject = async (req, res) => {
   if (req.user.role !== "Admin")
     return res.status(403).json({ message: "Acesso negado" });
 
   const { subjectId, professorId } = req.body;
+
+  const connection = await db.getConnection(); // usar transação para segurança
+  await connection.beginTransaction();
+
   try {
-    await db.query(
+    // 1. Inserir associação com a cadeira
+    await connection.query(
       `INSERT INTO SubjectsProfessors (SubjectFK, PeopleFK, CreatedBy, CreatedOn)
        VALUES (?, ?, ?, NOW())`,
       [subjectId, professorId, req.user.email]
     );
-    res
-      .status(201)
-      .json({ message: "Professor atribuído à cadeira com sucesso" });
+
+    // 2. Obter os cursos associados a essa cadeira
+    const [courseRows] = await connection.query(
+      `SELECT CourseId FROM SubjectsCourses WHERE SubjectFK = ?`,
+      [subjectId]
+    );
+
+    // 3. Para cada curso, verificar se já existe associação com o professor
+    for (const row of courseRows) {
+      const [existing] = await connection.query(
+        `SELECT * FROM ProfessorsCourses WHERE PeopleFK = ? AND CourseFK = ?`,
+        [professorId, row.CourseId]
+      );
+
+      if (existing.length === 0) {
+        await connection.query(
+          `INSERT INTO ProfessorsCourses (PeopleFK, CourseFK) VALUES (?, ?)`,
+          [professorId, row.CourseId]
+        );
+      }
+    }
+
+    await connection.commit();
+    res.status(201).json({ message: "Professor atribuído com sucesso à cadeira e curso(s)" });
   } catch (err) {
+    await connection.rollback();
     res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
   }
 };
+
 
 // DELETE: remover atribuição
 exports.removeProfessorFromSubject = async (req, res) => {
