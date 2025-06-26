@@ -26,7 +26,7 @@ exports.getAllSubjectsProfessors = async (req, res) => {
   }
 
   const year = req.query.year || "";
-
+  console.log(year)
   try {
     let sql = `
       SELECT 
@@ -52,7 +52,7 @@ exports.getAllSubjectsProfessors = async (req, res) => {
       sql += " WHERE s.CurricularYear = ? ";
       params.push(year);
     }
-
+    
     const [rows] = await db.query(sql, params);
     res.json(rows);
   } catch (err) {

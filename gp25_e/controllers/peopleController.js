@@ -80,34 +80,62 @@ exports.createPerson = async (req, res) => {
 
 // Atualizar utilizador e seus roles
 exports.updatePerson = async (req, res) => {
-    const { IdIpt, Name, Email, Title, Password, Roles = [], UpdatedBy } = req.body;
+  const { IdIpt, Name, Email, Title, Password, Roles = [], UpdatedBy } = req.body;
+  const personId = req.params.id;
 
-    try {
-        const hashedPassword = await bcrypt.hash(Password, 10);
+  try {
+    let passwordToSave;
 
-        const [result] = await db.query(
-            'UPDATE People SET IdIpt = ?, Name = ?, Email = ?, Title = ?, Password = ?, UpdatedBy = ?, UpdatedOn = NOW() WHERE Id = ?',
-            [IdIpt, Name, Email, Title, hashedPassword, UpdatedBy, req.params.id]
-        );
-
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found' });
-
-        // Apagar roles antigos
-        await db.query('DELETE FROM PeopleRoles WHERE PeopleFK = ?', [req.params.id]);
-
-        // Inserir novos roles
-        for (const roleId of Roles) {
-            await db.query(
-                'INSERT INTO PeopleRoles (PeopleFK, RoleFK, CreatedBy, CreatedOn) VALUES (?, ?, ?, NOW())',
-                [req.params.id, roleId, UpdatedBy]
-            );
-        }
-
-        res.json({ message: 'User updated' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    if (!Password) {
+      // 1️⃣ Se não vier password nova, buscar a existente
+      const [rows] = await db.query(
+        'SELECT Password FROM People WHERE Id = ?',
+        [personId]
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      passwordToSave = rows[0].Password;
+    } else {
+      // 2️⃣ Senão, hash da nova password
+      passwordToSave = await bcrypt.hash(Password, 10);
     }
+
+    // 3️⃣ Executa o update
+    const [result] = await db.query(
+      `UPDATE People
+         SET IdIpt     = ?,
+             Name      = ?,
+             Email     = ?,
+             Title     = ?,
+             Password  = ?,
+             UpdatedBy = ?,
+             UpdatedOn = NOW()
+       WHERE Id = ?`,
+      [IdIpt, Name, Email, Title, passwordToSave, UpdatedBy, personId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 4️⃣ Recria os roles
+    await db.query('DELETE FROM PeopleRoles WHERE PeopleFK = ?', [personId]);
+    for (const roleId of Roles) {
+      await db.query(
+        `INSERT INTO PeopleRoles (PeopleFK, RoleFK, CreatedBy, CreatedOn)
+         VALUES (?, ?, ?, NOW())`,
+        [personId, roleId, UpdatedBy]
+      );
+    }
+
+    res.json({ message: 'User updated' });
+  } catch (err) {
+    console.error('❌ Erro ao atualizar utilizador:', err);
+    res.status(500).json({ error: err.message });
+  }
 };
+
 
 // Apagar utilizador
 exports.deletePerson = async (req, res) => {

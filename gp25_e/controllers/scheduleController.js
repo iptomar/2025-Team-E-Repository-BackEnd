@@ -141,51 +141,14 @@ exports.deleteSchedule = async (req, res) => {
   }
 };
 
-// Adicionar bloco ao calendário
+// Adicionar bloco ao calendário (sem validações)
 exports.addBlock = async (req, res) => {
   const { subjectId, scheduleId, classroomId, startHour, endHour, dayOfWeek, createdBy } = req.body;
 
-  if (!subjectId || !scheduleId || !classroomId || !startHour || !endHour || !dayOfWeek) {
-    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
-  }
-
-  if (toMinutes(endHour) <= toMinutes(startHour)) {
-    return res.status(400).json({ message: 'Hora de fim tem de ser posterior à hora de início.' });
-  }
-
-  if (dayOfWeek < 1 || dayOfWeek > 6) {
-    return res.status(400).json({ message: 'O dia da semana tem de estar entre 1 e 6.' });
-  }
-
   try {
-    const [roomConflicts] = await db.query(`
-      SELECT * FROM Block
-      WHERE ClassroomFK = ? AND DayOfWeek = ?
-        AND StartHour < ? AND EndHour > ?
-    `, [classroomId, dayOfWeek, endHour, startHour]);
-
-    const [professorConflicts] = await db.query(`
-      SELECT b.* 
-      FROM Block b
-      JOIN SubjectsProfessors sp_new ON sp_new.SubjectFK = ?
-      JOIN SubjectsProfessors sp_existing ON sp_existing.SubjectFK = b.SubjectFK
-      WHERE b.DayOfWeek = ?
-        AND sp_existing.PeopleFK = sp_new.PeopleFK
-        AND b.StartHour < ? AND b.EndHour > ?
-    `, [subjectId, dayOfWeek, endHour, startHour]);
-
-    if (roomConflicts.length > 0 || professorConflicts.length > 0) {
-      return res.status(409).json({
-        message: 'Conflito detectado ao adicionar bloco.',
-        conflicts: [
-          ...(roomConflicts.length ? [{ type: 'room', conflicts: roomConflicts }] : []),
-          ...(professorConflicts.length ? [{ type: 'professor', conflicts: professorConflicts }] : [])
-        ]
-      });
-    }
-
     await db.query(
-      `INSERT INTO Block (SubjectFK, StartHour, EndHour, DayOfWeek, ScheduleFK, ClassroomFK, CreatedBy, CreatedOn)
+      `INSERT INTO Block 
+         (SubjectFK, StartHour, EndHour, DayOfWeek, ScheduleFK, ClassroomFK, CreatedBy, CreatedOn)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [subjectId, startHour, endHour, dayOfWeek, scheduleId, classroomId, createdBy]
     );
@@ -195,6 +158,7 @@ exports.addBlock = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Remover bloco
 exports.deleteBlock = async (req, res) => {
